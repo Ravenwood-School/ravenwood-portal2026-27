@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ravenwood Results Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         .missing-mark { background-color: #fee2e2 !important; border: 2px solid #ef4444 !important; }
-        table { border-collapse: collapse; width: 100%; }
+        table { border-collapse: collapse; width: 100%; min-width: 1000px; }
         th, td { border: 1px solid #d1d5db; padding: 10px; text-align: center; font-size: 14px; }
         th { background-color: #f3f4f6; color: #1f2937; font-weight: 600; }
-        input { width: 100%; text-align: center; background: transparent; border: none; padding: 4px; }
+        input { width: 100%; text-align: center; background: transparent; border: none; padding: 6px; }
         input:focus { outline: 2px solid #3b82f6; background: #fff; border-radius: 4px; }
     </style>
 </head>
@@ -22,7 +24,7 @@
 
     <header class="bg-indigo-950 text-white p-4 shadow-lg flex justify-between items-center px-8">
         <div class="flex items-center gap-4">
-            <img id="display-logo" src="https://via.placeholder.com/60" alt="School Logo" class="h-14 w-14 rounded-full object-cover bg-white p-1 border">
+            <img id="display-logo" src="https://via.placeholder.com/60" alt="Logo" class="h-14 w-14 rounded-full object-cover bg-white p-1 border">
             <div>
                 <h1 class="text-2xl font-bold tracking-wide">RAVENWOOD INTERNATIONAL SCHOOL</h1>
                 <p class="text-xs text-indigo-200 tracking-wider">Academic Session 2026-27</p>
@@ -60,32 +62,25 @@
 
             <div id="admin-fields" class="hidden mb-4">
                 <label class="block text-sm font-semibold mb-1 text-slate-600">Admin Password:</label>
-                <input type="password" id="admin-pass" placeholder="Enter Admin Password" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 text-left focus:outline-none focus:border-indigo-500">
+                <input type="password" id="admin-pass" placeholder="Enter Password (1234)" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 text-left focus:outline-none focus:border-indigo-500">
             </div>
 
             <button onclick="login()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg mt-6 transition shadow-md">Enter Dashboard</button>
         </div>
     </main>
 
-    <main id="dashboard-section" class="hidden flex-grow p-6 max-w-7xl mx-auto w-full space-y-6">
+    <main id="dashboard-section" class="hidden flex-grow p-6 max-w-[95%] mx-auto w-full space-y-6">
         
         <div id="admin-controls" class="hidden bg-white p-6 rounded-2xl shadow border border-slate-100 space-y-4">
-            <h3 class="font-bold text-lg text-indigo-950 border-b pb-2 flex items-center gap-2">
-                <span>⚙️</span> Admin Configuration Management
-            </h3>
+            <h3 class="font-bold text-lg text-indigo-950 border-b pb-2 flex items-center gap-2">⚙️ Admin Configuration</h3>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
                 <div class="lg:col-span-2">
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Dynamic Excel Heading Template:</label>
-                    <input type="text" id="excel-heading-input" value="PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)" class="w-full border border-slate-300 p-2.5 rounded-lg text-left bg-slate-50 focus:outline-none focus:border-indigo-500">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Excel Heading Template:</label>
+                    <input type="text" id="excel-heading-input" value="PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 focus:outline-none focus:border-indigo-500">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">School Logo URL:</label>
-                    <input type="text" id="logo-url-input" placeholder="Paste Image URL" class="w-full border border-slate-300 p-2.5 rounded-lg text-left bg-slate-50 focus:outline-none focus:border-indigo-500" onblur="updateLogo(this.value)">
+                    <button class="w-full bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-emerald-700 transition shadow" onclick="alert('Export all classes feature triggered')">Export All Classes</button>
                 </div>
-            </div>
-            <div class="flex flex-wrap gap-3 pt-2">
-                <button class="bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-emerald-700 transition shadow text-sm" onclick="exportAllClasses()">Export All Classes Consolidated</button>
-                <div class="text-xs text-slate-400 self-center">* Admin configurations are editable live. All system structures are fully customizable.</div>
             </div>
         </div>
 
@@ -93,45 +88,47 @@
             <div class="bg-slate-50 p-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
                 <div>
                     <h2 id="current-view-title" class="text-xl font-bold text-slate-800">Class Workspace</h2>
-                    <p id="sub-title-info" class="text-xs text-slate-500 mt-0.5">Real-time Cloud Sync Enabled (Auto-Saving...)</p>
+                    <p class="text-xs text-slate-500 mt-0.5">🟢 Auto-Saving is Active</p>
                 </div>
                 <div class="flex gap-3">
                     <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition text-sm flex items-center gap-1.5 shadow" onclick="addNewStudentRow()">
-                        <span>+</span> Add Student Row
+                        + Add Student Row
                     </button>
                     <button class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition text-sm flex items-center gap-1.5 shadow" onclick="exportCurrentClassToExcel()">
-                        <span>📥</span> Export Print Excel
+                        📥 Export Print Excel
                     </button>
                 </div>
             </div>
             
-            <div class="overflow-x-auto w-full">
+            <div class="overflow-x-auto w-full p-4">
                 <table id="marks-entry-table">
-                    <thead id="table-head-row">
-                        </thead>
-                    <tbody id="table-body-rows">
-                        </tbody>
+                    <thead id="table-head-row"></thead>
+                    <tbody id="table-body-rows"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
     <script>
-        // Your specific Firebase Web App Configuration
+        // ==========================================
+        // FIREBASE CONFIGURATION INJECTED HERE
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyB5RV8tLsLZD6h1tsm_PxWnxrRZyylQY3k",
             authDomain: "ravenwood-exam-portal.firebaseapp.com",
+            databaseURL: "https://ravenwood-exam-portal-default-rtdb.firebaseio.com", // Added databaseURL
             projectId: "ravenwood-exam-portal",
             storageBucket: "ravenwood-exam-portal.firebasestorage.app",
             messagingSenderId: "737654590264",
             appId: "1:737654590264:web:00b64a74917a93cd1b4fcd"
         };
         
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Comprehensive Structured School Mapping Data
+        // ==========================================
+        // SCHOOL ACADEMIC STRUCTURE (From uploaded files)
+        // ==========================================
         const academicStructure = {
             "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
             "II": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["EARTH", "JUPITER", "MARS", "NEPTUNE", "VENUS"] },
@@ -151,8 +148,7 @@
         let DatabaseReferencePath = "";
         let ActiveConfigStructure = null;
 
-        // Initialize App Login Dropdowns on Boot
-        window.addEventListener('DOMContentLoaded', () => {
+        window.onload = () => {
             const classDropdown = document.getElementById('class-select');
             Object.keys(academicStructure).forEach(cls => {
                 let opt = document.createElement('option');
@@ -160,19 +156,7 @@
                 opt.innerText = `Class ${cls}`;
                 classDropdown.appendChild(opt);
             });
-            
-            // Sync Admin Global Layout/Logo Options from Firebase Realtime
-            database.ref('portal_config').on('value', (snap) => {
-                let conf = snap.val();
-                if(conf) {
-                    if(conf.excelHeading) document.getElementById('excel-heading-input').value = conf.excelHeading;
-                    if(conf.logoUrl) {
-                        document.getElementById('logo-url-input').value = conf.logoUrl;
-                        document.getElementById('display-logo').src = conf.logoUrl;
-                    }
-                }
-            });
-        });
+        };
 
         function toggleLoginFields() {
             const role = document.getElementById('role-select').value;
@@ -189,7 +173,6 @@
             const cls = document.getElementById('class-select').value;
             const secDropdown = document.getElementById('section-select');
             secDropdown.innerHTML = '<option value="">-- Select Section --</option>';
-            
             if(cls && academicStructure[cls]) {
                 academicStructure[cls].sections.forEach(sec => {
                     let opt = document.createElement('option');
@@ -206,20 +189,18 @@
                 if(document.getElementById('admin-pass').value === '1234') {
                     ActiveUserRole = 'admin';
                     document.getElementById('admin-controls').classList.remove('hidden');
-                    InitializeWorkspace('I', 'DAFFODILS');
+                    InitializeWorkspace('I', 'DAFFODILS'); // Default admin view
                 } else {
-                    alert('Invalid Administrator Password!');
-                    return;
+                    alert('Invalid Password!'); return;
                 }
             } else {
                 const cls = document.getElementById('class-select').value;
                 const sec = document.getElementById('section-select').value;
-                if(!cls || !sec) { alert('Please choose both Class and Section to proceed.'); return; }
+                if(!cls || !sec) { alert('Please choose Class and Section.'); return; }
                 ActiveUserRole = 'teacher';
                 document.getElementById('admin-controls').classList.add('hidden');
                 InitializeWorkspace(cls, sec);
             }
-
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
             document.getElementById('logout-btn').classList.remove('hidden');
@@ -227,21 +208,12 @@
 
         function logout() { location.reload(); }
 
-        function updateLogo(url) {
-            if(url) database.ref('portal_config/logoUrl').set(url);
-        }
-        
-        document.getElementById('excel-heading-input').addEventListener('blur', function() {
-            database.ref('portal_config/excelHeading').set(this.value);
-        });
-
         function InitializeWorkspace(cls, sec) {
             SelectedClassKey = cls;
             SelectedSectionKey = sec;
             ActiveConfigStructure = academicStructure[cls];
             DatabaseReferencePath = `student_records/${cls}/${sec}`;
-            
-            document.getElementById('current-view-title').innerText = `Class Workspace: ${cls} — Section ${sec}`;
+            document.getElementById('current-view-title').innerText = `Class Workspace: ${cls} - ${sec}`;
             
             GenerateTableHeaders();
             SyncCloudDataLive();
@@ -249,35 +221,36 @@
 
         function GenerateTableHeaders() {
             const thead = document.getElementById('table-head-row');
-            thead.innerHTML = '';
-            
             let html = `<tr>
-                <th style="width: 90px;">Roll No</th>
-                <th style="width: 240px; text-align: left;">Student Name</th>`;
+                <th style="width: 80px;">Roll No</th>
+                <th style="width: 250px; text-align: left;">Student Name</th>`;
                 
-            // All Subjects including Art are placed first
+            // All Subjects (including Art) go first
             ActiveConfigStructure.subjects.forEach(sub => {
-                let maxLabel = (sub.toLowerCase() === 'art') ? 'Grade' : `Max: ${ActiveConfigStructure.max}`;
-                html += `<th>${sub} <br><span class="text-[10px] text-slate-400 font-normal">(${maxLabel})</span></th>`;
+                let isArt = sub.toLowerCase() === 'art';
+                let label = isArt ? 'Grade' : `Max: ${ActiveConfigStructure.max}`;
+                html += `<th>${sub} <br><span class="text-[10px] text-slate-400 font-normal">(${label})</span></th>`;
             });
 
-            // Total, %age, Rank explicitly placed at the absolute end
+            // Total, %age, Rank strictly at the end
             html += `
-                <th class="bg-indigo-50 text-indigo-900">Total</th>
-                <th class="bg-indigo-50 text-indigo-900">%age</th>
-                <th class="bg-amber-50 text-amber-900">Rank</th>`;
+                <th class="bg-indigo-100 text-indigo-900">Total</th>
+                <th class="bg-indigo-100 text-indigo-900">%age</th>
+                <th class="bg-amber-100 text-amber-900">Rank</th>`;
                 
-            if(ActiveUserRole === 'admin') html += `<th class="bg-rose-50 text-rose-700">Actions</th>`;
+            if(ActiveUserRole === 'admin') html += `<th class="bg-rose-100 text-rose-700">Actions</th>`;
             html += `</tr>`;
-            
             thead.innerHTML = html;
         }
 
         function SyncCloudDataLive() {
-            database.ref(DatabaseReferencePath).off();
+            database.ref(DatabaseReferencePath).off(); // Prevent duplicate listeners
             database.ref(DatabaseReferencePath).on('value', (snapshot) => {
                 const records = snapshot.val() || {};
                 RenderDataMatrix(records);
+            }, (error) => {
+                console.error("Firebase Error: ", error);
+                alert("Database access denied! Please check Firebase Rules.");
             });
         }
 
@@ -287,51 +260,53 @@
             
             let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
             
+            // Calculate Totals for Ranking
             studentsList.forEach(student => {
-                let currentSum = 0;
+                let sum = 0;
                 ActiveConfigStructure.subjects.forEach(sub => {
                     if(sub.toLowerCase() !== 'art' && student[sub]) {
-                        currentSum += Number(student[sub]);
+                        sum += Number(student[sub]);
                     }
                 });
-                student.calculatedTotal = currentSum;
+                student.calculatedTotal = sum;
             });
 
+            // Sort by Total (Highest first) for Rank
             studentsList.sort((a, b) => b.calculatedTotal - a.calculatedTotal);
 
             studentsList.forEach((student, index) => {
                 const tr = document.createElement('tr');
                 
-                let rollClass = (student.rollNo === undefined || student.rollNo === '') ? 'missing-mark' : '';
-                let nameClass = (student.name === undefined || student.name === '') ? 'missing-mark' : '';
+                let rollClass = (!student.rollNo) ? 'missing-mark' : '';
+                let nameClass = (!student.name) ? 'missing-mark' : '';
                 
                 let rowHtml = `
                     <td class="${rollClass}"><input type="number" value="${student.rollNo || ''}" onblur="commitCellChange('${student.id}', 'rollNo', this.value)" oninput="evaluateHighlight(this)"></td>
-                    <td class="${nameClass}" style="text-align: left;"><input type="text" style="text-align: left;" value="${student.name || ''}" onblur="commitCellChange('${student.id}', 'name', this.value)" oninput="evaluateHighlight(this)"></td>
+                    <td class="${nameClass}"><input type="text" style="text-align: left;" value="${student.name || ''}" onblur="commitCellChange('${student.id}', 'name', this.value)" oninput="evaluateHighlight(this)"></td>
                 `;
 
                 // Render Subject Inputs
                 ActiveConfigStructure.subjects.forEach(sub => {
                     let markVal = student[sub] !== undefined ? student[sub] : '';
-                    let subMarkClass = (markVal === '') ? 'missing-mark' : '';
-                    let inputType = (sub.toLowerCase() === 'art') ? 'text' : 'number';
+                    let subClass = (markVal === '') ? 'missing-mark' : '';
+                    let inpType = (sub.toLowerCase() === 'art') ? 'text' : 'number';
                     
-                    rowHtml += `<td class="${subMarkClass}"><input type="${inputType}" value="${markVal}" oninput="evaluateHighlight(this); validateMaxConstraint(this, '${sub}')" onblur="commitCellChange('${student.id}', '${sub}', this.value)"></td>`;
+                    rowHtml += `<td class="${subClass}"><input type="${inpType}" value="${markVal}" oninput="evaluateHighlight(this); validateMaxConstraint(this, '${sub}')" onblur="commitCellChange('${student.id}', '${sub}', this.value)"></td>`;
                 });
 
-                // Trailing Calculated Metrics
-                const gradableSubjectsCount = ActiveConfigStructure.subjects.filter(s => s.toLowerCase() !== 'art').length;
-                const grandMaxPossibleScore = gradableSubjectsCount * ActiveConfigStructure.max;
-                const computedPercentage = grandMaxPossibleScore > 0 ? ((student.calculatedTotal / grandMaxPossibleScore) * 100).toFixed(1) + '%' : '0.0%';
+                // Render Calculated Metrics at the end
+                const academicSubjects = ActiveConfigStructure.subjects.filter(s => s.toLowerCase() !== 'art').length;
+                const grandTotal = academicSubjects * ActiveConfigStructure.max;
+                const percentage = grandTotal > 0 ? ((student.calculatedTotal / grandTotal) * 100).toFixed(1) + '%' : '0.0%';
 
                 rowHtml += `
-                    <td class="bg-slate-50 font-bold text-slate-700">${student.calculatedTotal}</td>
-                    <td class="bg-slate-50 font-bold text-slate-700">${computedPercentage}</td>
-                    <td class="bg-amber-50/60 font-black text-amber-700">${index + 1}</td>
+                    <td class="bg-slate-50 font-bold">${student.calculatedTotal}</td>
+                    <td class="bg-slate-50 font-bold">${percentage}</td>
+                    <td class="bg-amber-50 font-black text-amber-700">${index + 1}</td>
                 `;
 
                 if(ActiveUserRole === 'admin') {
-                    rowHtml += `<td class="bg-rose-50/30"><button class="text-rose-600 hover:text-rose-900 font-semibold text-xs tracking-wide uppercase" onclick="purgeStudentRecord('${student.id}')">Delete</button></td>`;
+                    rowHtml += `<td><button class="text-rose-600 font-bold text-xs" onclick="purgeRecord('${student.id}')">Delete</button></td>`;
                 }
 
                 tr.innerHTML = rowHtml;
@@ -339,83 +314,62 @@
             });
         }
 
-        function evaluateHighlight(element) {
-            if(element.value.trim() === "") {
-                element.parentElement.classList.add('missing-mark');
-            } else {
-                element.parentElement.classList.remove('missing-mark');
+        function evaluateHighlight(el) {
+            if(el.value.trim() === "") el.parentElement.classList.add('missing-mark');
+            else el.parentElement.classList.remove('missing-mark');
+        }
+
+        function validateMaxConstraint(el, sub) {
+            if(sub.toLowerCase() !== 'art' && Number(el.value) > ActiveConfigStructure.max) {
+                alert(`Max limit is ${ActiveConfigStructure.max} for ${sub}!`);
+                el.value = ActiveConfigStructure.max;
             }
         }
 
-        function validateMaxConstraint(element, subject) {
-            if(subject.toLowerCase() !== 'art' && ActiveConfigStructure) {
-                if(Number(element.value) > ActiveConfigStructure.max) {
-                    alert(`Alert: Value exceeds Maximum Cap limit of ${ActiveConfigStructure.max} marks for ${subject}!`);
-                    element.value = ActiveConfigStructure.max;
-                }
-            }
-        }
-
-        function commitCellChange(studentId, fieldKey, dataValue) {
-            database.ref(`${DatabaseReferencePath}/${studentId}/${fieldKey}`).set(dataValue);
+        function commitCellChange(id, field, val) {
+            database.ref(`${DatabaseReferencePath}/${id}/${field}`).set(val);
         }
 
         function addNewStudentRow() {
-            const rowReference = database.ref(DatabaseReferencePath).push();
-            let basePayload = { rollNo: "", name: "" };
-            ActiveConfigStructure.subjects.forEach(sub => { basePayload[sub] = ""; });
-            rowReference.set(basePayload);
+            const rowRef = database.ref(DatabaseReferencePath).push();
+            let payload = { rollNo: "", name: "" };
+            ActiveConfigStructure.subjects.forEach(sub => { payload[sub] = ""; });
+            rowRef.set(payload);
         }
 
-        function purgeStudentRecord(studentId) {
-            if(confirm("Confirm action: Permanently remove this student record from cloud database?")) {
-                database.ref(`${DatabaseReferencePath}/${studentId}`).remove();
+        function purgeRecord(id) {
+            if(confirm("Delete this student permanently?")) {
+                database.ref(`${DatabaseReferencePath}/${id}`).remove();
             }
         }
 
         function exportCurrentClassToExcel() {
-            const templateText = document.getElementById('excel-heading-input').value;
-            const finalComputedHeading = templateText.replace('_________', `Class ${SelectedClassKey}-${SelectedSectionKey}`);
+            const template = document.getElementById('excel-heading-input').value;
+            const finalHeading = template.replace('_________', `Class ${SelectedClassKey}-${SelectedSectionKey}`);
             
-            const workbookDataMatrix = [];
+            const wbData = [ ["RAVENWOOD INTERNATIONAL SCHOOL"], [finalHeading], [] ];
             
-            workbookDataMatrix.push(["RAVENWOOD INTERNATIONAL SCHOOL"]);
-            workbookDataMatrix.push([finalComputedHeading]);
-            workbookDataMatrix.push([]);
-            
-            const currentTable = document.getElementById('marks-entry-table');
-            const dataHeaderColumns = Array.from(currentTable.querySelectorAll("th")).map(th => th.innerText.split('\n')[0].trim());
-            if(ActiveUserRole === 'admin') dataHeaderColumns.pop();
-            
-            workbookDataMatrix.push(dataHeaderColumns);
+            const table = document.getElementById('marks-entry-table');
+            const headers = Array.from(table.querySelectorAll("th")).map(th => th.innerText.split('\n')[0].trim());
+            if(ActiveUserRole === 'admin') headers.pop(); 
+            wbData.push(headers);
 
-            const dataTableRows = Array.from(currentTable.querySelectorAll("tbody tr"));
-            dataTableRows.forEach(row => {
-                const standardRowCollector = [];
-                const innerInputElements = row.querySelectorAll("input");
-                innerInputElements.forEach(inp => standardRowCollector.push(inp.value));
-                
-                const statutoryCalculatedCells = row.querySelectorAll("td");
-                let totalLen = statutoryCalculatedCells.length;
+            const rows = Array.from(table.querySelectorAll("tbody tr"));
+            rows.forEach(row => {
+                const rowData = [];
+                row.querySelectorAll("input").forEach(inp => rowData.push(inp.value));
+                const tds = row.querySelectorAll("td");
                 let offset = (ActiveUserRole === 'admin') ? 1 : 0;
-                
-                standardRowCollector.push(statutoryCalculatedCells[totalLen - 3 - offset].innerText);
-                standardRowCollector.push(statutoryCalculatedCells[totalLen - 2 - offset].innerText);
-                standardRowCollector.push(statutoryCalculatedCells[totalLen - 1 - offset].innerText);
-                
-                workbookDataMatrix.push(standardRowCollector);
+                rowData.push(tds[tds.length - 3 - offset].innerText);
+                rowData.push(tds[tds.length - 2 - offset].innerText);
+                rowData.push(tds[tds.length - 1 - offset].innerText);
+                wbData.push(rowData);
             });
 
-            const targetWorksheet = XLSX.utils.aoa_to_sheet(workbookDataMatrix);
-            targetWorksheet['!cols'] = [{wch: 12}, {wch: 28}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}, {wch: 12}];
-            
-            const activeWorkbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(activeWorkbook, targetWorksheet, "Exam Report Sheet");
-            XLSX.writeFile(activeWorkbook, `Class_${SelectedClassKey}_${SelectedSectionKey}_Result_Report.xlsx`);
-        }
-
-        function exportAllClasses() {
-            alert("Administrative Engine: Multi-sheet export logic active. Ensure all Firebase collections are fully synchronized.");
+            const ws = XLSX.utils.aoa_to_sheet(wbData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Result");
+            XLSX.writeFile(wb, `Class_${SelectedClassKey}_${SelectedSectionKey}_Result.xlsx`);
         }
     </script>
 </body>
