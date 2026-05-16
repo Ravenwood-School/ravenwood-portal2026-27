@@ -17,38 +17,68 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .missing-mark { background-color: #fef2f2 !important; border: 2px solid #ef4444 !important; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; }
-        th { background-color: #1e293b; color: #f8fafc; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; padding: 12px 8px; border: 1px solid #334155; }
+        
+        /* Mobile Scroll Optimization for Table */
+        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; /* Forces scroll on mobile */ }
+        
+        th { background-color: #1e293b; color: #f8fafc; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; padding: 12px 8px; border: 1px solid #334155; white-space: nowrap; }
         td { border: 1px solid #e2e8f0; padding: 6px 4px; text-align: center; font-size: 14px; background-color: #fff; }
         tr:hover td { background-color: #f8fafc; }
-        input { width: 100%; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 500; color: #334155; }
+        input { width: 100%; min-width: 60px; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 500; color: #334155; }
         input:focus { outline: 2px solid #6366f1; background: #fff; border-radius: 6px; }
         .admin-tab-btn.active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 700; }
+
+        /* News Ticker Animation CSS */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background-color: #fef9c3; /* Light Yellow */
+            border-top: 1px solid #fde047;
+            border-bottom: 1px solid #fde047;
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+        }
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 25s linear infinite;
+            font-weight: 700;
+            color: #b45309; /* Dark Amber */
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col">
 
-    <header class="bg-slate-900 text-white shadow-xl flex justify-between items-center px-8 py-4 border-b border-slate-800">
-        <div class="flex items-center gap-4">
-            <img id="display-logo" src="https://via.placeholder.com/120?text=Logo" alt="School Logo" class="h-14 w-14 rounded-xl object-contain bg-white p-1 shadow-inner border border-slate-700">
-            <div>
-                <h1 id="app-school-name" class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">RAVENWOOD INTERNATIONAL SCHOOL</h1>
-                <p class="text-xs text-indigo-400 font-medium tracking-widest uppercase mt-0.5">Automated Cloud Examination Desk</p>
+    <header class="bg-slate-900 text-white shadow-xl flex flex-col md:flex-row justify-between items-center px-4 md:px-8 py-4 border-b border-slate-800 gap-4">
+        <div class="flex items-center gap-3">
+            <img id="display-logo" src="https://via.placeholder.com/120?text=Logo" alt="School Logo" class="h-12 w-12 md:h-14 md:w-14 rounded-xl object-contain bg-white p-1 shadow-inner border border-slate-700">
+            <div class="text-center md:text-left">
+                <h1 id="app-school-name" class="text-lg md:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">RAVENWOOD INT. SCHOOL</h1>
+                <p class="text-[10px] md:text-xs text-indigo-400 font-medium tracking-widest uppercase mt-0.5">Automated Cloud Exam Desk</p>
             </div>
         </div>
-        <div class="flex items-center gap-6">
-            <div id="connection-status" class="px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-amber-500/10 text-amber-400 border border-amber-500/30">
-                ⏳ Synchronizing Matrix...
+        <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            <div id="connection-status" class="w-full md:w-auto text-center px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                ⏳ Synchronizing...
             </div>
-            <button id="logout-btn" class="hidden bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg" onclick="logout()">Exit Portal</button>
+            <button id="logout-btn" class="hidden w-full md:w-auto bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg" onclick="logout()">Exit Portal</button>
         </div>
     </header>
 
-    <main id="login-section" class="flex-grow flex justify-center items-center p-6 bg-gradient-to-b from-slate-900 to-slate-950 relative overflow-hidden">
+    <main id="login-section" class="flex-grow flex justify-center items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 to-slate-950 relative overflow-hidden">
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        <div class="bg-white/95 backdrop-blur p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200/50 relative z-10">
+        <div class="bg-white/95 backdrop-blur p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200/50 relative z-10">
             <div class="text-center mb-6">
-                <h2 class="text-3xl font-black tracking-tight text-slate-800">Secure Gateway</h2>
+                <h2 class="text-2xl md:text-3xl font-black tracking-tight text-slate-800">Secure Gateway</h2>
             </div>
             
             <div class="mb-5">
@@ -79,31 +109,31 @@
         </div>
     </main>
 
-    <main id="dashboard-section" class="hidden flex-grow p-6 max-w-[98%] mx-auto w-full space-y-6">
+    <main id="dashboard-section" class="hidden flex-grow p-2 md:p-6 w-full max-w-full space-y-6">
         
         <div id="admin-controls" class="hidden bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-            <div class="border-b border-slate-200 bg-slate-50 px-6 py-2 flex gap-6">
-                <button class="admin-tab-btn active py-3 text-sm font-semibold transition" onclick="switchAdminTab('data-view')">👁️ Live Marks Console</button>
-                <button class="admin-tab-btn py-3 text-sm font-semibold transition" onclick="switchAdminTab('structure-view')">🛠️ School Structure Manager</button>
-                <button class="admin-tab-btn py-3 text-sm font-semibold transition" onclick="switchAdminTab('branding-view')">🎨 Logo & Export Design</button>
+            <div class="border-b border-slate-200 bg-slate-50 px-2 md:px-6 py-2 flex flex-wrap gap-2 md:gap-6 overflow-x-auto">
+                <button class="admin-tab-btn active py-3 text-xs md:text-sm font-semibold transition whitespace-nowrap" onclick="switchAdminTab('data-view')">👁️ Live Monitor</button>
+                <button class="admin-tab-btn py-3 text-xs md:text-sm font-semibold transition whitespace-nowrap" onclick="switchAdminTab('structure-view')">🛠️ Structure Manager</button>
+                <button class="admin-tab-btn py-3 text-xs md:text-sm font-semibold transition whitespace-nowrap" onclick="switchAdminTab('branding-view')">🎨 Design & Ticker</button>
             </div>
 
-            <div id="admin-tab-data-view" class="p-6 space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-4 bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
-                    <div>
+            <div id="admin-tab-data-view" class="p-4 md:p-6 space-y-4">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                    <div class="text-center md:text-left w-full md:w-auto">
                         <h4 class="font-bold text-indigo-950 text-base">Monitor Single Class Metrics</h4>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <select id="admin-class-select" class="border border-slate-300 p-2 rounded-xl bg-white font-semibold text-sm" onchange="updateAdminSections()"></select>
-                        <select id="admin-section-select" class="border border-slate-300 p-2 rounded-xl bg-white font-semibold text-sm"></select>
-                        <button class="bg-indigo-600 text-white px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-indigo-700" onclick="loadAdminSelectedClass()">Load Data</button>
+                    <div class="flex flex-wrap justify-center md:justify-end items-center gap-3 w-full md:w-auto">
+                        <select id="admin-class-select" class="border border-slate-300 p-2 rounded-xl bg-white font-semibold text-sm w-full md:w-auto" onchange="updateAdminSections()"></select>
+                        <select id="admin-section-select" class="border border-slate-300 p-2 rounded-xl bg-white font-semibold text-sm w-full md:w-auto"></select>
+                        <button class="w-full md:w-auto bg-indigo-600 text-white px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-indigo-700" onclick="loadAdminSelectedClass()">Load Data</button>
                     </div>
                 </div>
             </div>
 
-            <div id="admin-tab-structure-view" class="hidden p-6 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="border border-slate-200 p-5 rounded-2xl bg-slate-50/50 space-y-3">
+            <div id="admin-tab-structure-view" class="hidden p-4 md:p-6 space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="border border-slate-200 p-4 md:p-5 rounded-2xl bg-slate-50/50 space-y-3">
                         <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide border-b pb-2">Add New Class</h4>
                         <div class="grid grid-cols-2 gap-3">
                             <input type="text" id="new-class-name" placeholder="Class Name (e.g. XI)" class="bg-white border p-2 rounded-xl text-left font-semibold">
@@ -113,48 +143,62 @@
                         <input type="text" id="new-class-sections" placeholder="Sections (Comma separated)" class="w-full bg-white border p-2 rounded-xl text-left text-xs">
                         <button class="bg-slate-900 text-white w-full py-2.5 rounded-xl font-bold text-xs uppercase" onclick="saveNewClassStructure()">Save Class</button>
                     </div>
-                    <div class="border border-slate-200 p-5 rounded-2xl bg-slate-50/50 space-y-2">
+                    <div class="border border-slate-200 p-4 md:p-5 rounded-2xl bg-slate-50/50 space-y-2">
                         <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide border-b pb-2">Active Classes</h4>
                         <div id="active-structures-list" class="text-xs space-y-2 max-h-48 overflow-y-auto pr-2"></div>
                     </div>
                 </div>
             </div>
 
-            <div id="admin-tab-branding-view" class="hidden p-6 space-y-6">
+            <div id="admin-tab-branding-view" class="hidden p-4 md:p-6 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <div class="border border-slate-200 p-5 rounded-2xl bg-slate-50/50 space-y-3">
-                        <label class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Upload School Logo Image:</label>
-                        <p class="text-xs text-slate-500 mb-2">Select a PNG or JPG file from your computer. This will appear on portal and Excel prints.</p>
-                        <input type="file" id="logo-file-input" accept="image/png, image/jpeg" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" onchange="handleLogoUpload(event)">
+                    <div class="border border-slate-200 p-4 md:p-5 rounded-2xl bg-slate-50/50 space-y-3">
+                        <label class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Upload School Logo:</label>
+                        <p class="text-xs text-slate-500 mb-2">Select a PNG/JPG. This appears on portal and Excel prints.</p>
+                        <input type="file" id="logo-file-input" accept="image/png, image/jpeg" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:font-semibold file:bg-indigo-50 file:text-indigo-700" onchange="handleLogoUpload(event)">
                     </div>
                     
-                    <div class="border border-slate-200 p-5 rounded-2xl bg-slate-50/50 space-y-3">
-                        <label class="text-xs font-bold text-slate-800 uppercase tracking-wider block">Excel Heading Text:</label>
-                        <input type="text" id="excel-heading-input" value="PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)" class="w-full border border-slate-300 p-3 rounded-xl text-left bg-white font-medium">
+                    <div class="space-y-4">
+                        <div class="border border-slate-200 p-4 rounded-2xl bg-slate-50/50 space-y-2">
+                            <label class="text-xs font-bold text-slate-800 uppercase block">Excel Print Heading Text:</label>
+                            <input type="text" id="excel-heading-input" value="PT 1 Exam Result of Class _________ for Academic Session 2026-27" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm bg-white font-medium" onblur="saveAdminConfig('excelHeading', this.value)">
+                        </div>
+                        
+                        <div class="border border-slate-200 p-4 rounded-2xl bg-slate-50/50 space-y-2">
+                            <label class="text-xs font-bold text-amber-700 uppercase block">Moving Headline Ticker Text (News Style):</label>
+                            <input type="text" id="ticker-heading-input" value="🔥 PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May) has been declared! 🔥" class="w-full border border-amber-300 p-2.5 rounded-xl text-sm bg-white font-medium focus:ring-amber-500 focus:border-amber-500" onblur="saveAdminConfig('tickerText', this.value)">
+                            <p class="text-[10px] text-slate-500">Note: Use _________ to automatically insert Class Name.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-            <div class="bg-slate-900 px-6 py-5 flex flex-wrap justify-between items-center gap-4 border-b border-slate-800">
-                <div>
-                    <h2 id="current-view-title" class="text-xl font-black text-white tracking-wide">Select Space Parameters</h2>
-                    <p class="text-xs text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
-                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Saving Mode Active
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden w-full">
+            
+            <div class="ticker-wrap hidden" id="ticker-container">
+                <div class="ticker" id="live-ticker-text">
+                    </div>
+            </div>
+
+            <div class="bg-slate-900 px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-800">
+                <div class="text-center md:text-left">
+                    <h2 id="current-view-title" class="text-lg md:text-xl font-black text-white tracking-wide">Workspace Ready</h2>
+                    <p class="text-[10px] md:text-xs text-emerald-400 font-semibold mt-0.5 flex items-center justify-center md:justify-start gap-1">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Saving Active
                     </p>
                 </div>
-                <div class="flex gap-3">
-                    <button class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 text-xs flex items-center gap-2 uppercase" onclick="addNewStudentRow()">
+                <div class="flex flex-row justify-center w-full md:w-auto gap-2 md:gap-3">
+                    <button class="bg-indigo-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl font-bold hover:bg-indigo-700 text-[10px] md:text-xs flex items-center gap-1 md:gap-2 uppercase shadow-lg w-1/2 md:w-auto justify-center" onclick="addNewStudentRow()">
                         <span>+</span> Add Row
                     </button>
-                    <button class="bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-600 text-xs flex items-center gap-2 uppercase shadow-lg shadow-emerald-900" onclick="exportProfessionalExcel()">
-                        <span>📥</span> Export Professional Excel
+                    <button class="bg-emerald-500 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl font-bold hover:bg-emerald-600 text-[10px] md:text-xs flex items-center gap-1 md:gap-2 uppercase shadow-lg w-1/2 md:w-auto justify-center" onclick="exportProfessionalExcel()">
+                        <span>📥</span> Export Excel
                     </button>
                 </div>
             </div>
             
-            <div class="overflow-x-auto w-full p-6 bg-slate-50/50">
+            <div class="table-container p-2 md:p-6 bg-slate-50/50">
                 <table id="marks-entry-table" class="shadow-sm rounded-xl overflow-hidden border border-slate-200">
                     <thead id="table-head-row"></thead>
                     <tbody id="table-body-rows"></tbody>
@@ -183,27 +227,38 @@
         let SelectedSectionKey = "";
         let DatabaseReferencePath = "";
         let ActiveConfigStructure = null;
-        let globalSchoolLogoBase64 = null; // Store image data
+        let globalSchoolLogoBase64 = null; 
+        
+        // Ticker and Heading Global Variables
+        let globalExcelHeading = "PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)";
+        let globalTickerText = "🔥 PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May) has been declared! 🔥";
 
-        // Live Connection Status
+        // Connection Status
         database.ref(".info/connected").on("value", (snap) => {
             const statusEl = document.getElementById('connection-status');
             if (snap.val() === true) {
-                statusEl.className = "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                statusEl.innerText = "⚡ Database Connected";
+                statusEl.className = "w-full md:w-auto text-center px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                statusEl.innerText = "⚡ Connected";
             } else {
-                statusEl.className = "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                statusEl.innerText = "🛑 Offline Protocol Native";
+                statusEl.className = "w-full md:w-auto text-center px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                statusEl.innerText = "🛑 Offline";
             }
         });
 
-        // Load Configs from Firebase
+        // Load Global Configs
         database.ref('portal_config').on('value', (snap) => {
             let conf = snap.val();
             if(conf && conf.academicStructure) dynamicAcademicStructure = conf.academicStructure;
             
             if(conf) {
-                if(conf.excelHeading) document.getElementById('excel-heading-input').value = conf.excelHeading;
+                if(conf.excelHeading) {
+                    globalExcelHeading = conf.excelHeading;
+                    document.getElementById('excel-heading-input').value = conf.excelHeading;
+                }
+                if(conf.tickerText) {
+                    globalTickerText = conf.tickerText;
+                    document.getElementById('ticker-heading-input').value = conf.tickerText;
+                }
                 if(conf.logoBase64) {
                     globalSchoolLogoBase64 = conf.logoBase64;
                     document.getElementById('display-logo').src = conf.logoBase64;
@@ -211,26 +266,27 @@
             }
             populateDropdowns();
             renderActiveStructures();
+            
+            // If already loaded a class, refresh the ticker
+            if(SelectedClassKey && SelectedSectionKey) updateTickerText();
         });
 
-        // HANDLE LOGO IMAGE UPLOAD (Converts image to Base64 and saves to Firebase)
         function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const base64String = e.target.result;
-                    database.ref('portal_config/logoBase64').set(base64String).then(() => {
-                        alert("Logo successfully uploaded and saved to server!");
-                    }).catch(() => alert("Upload failed. Image might be too large."));
+                    database.ref('portal_config/logoBase64').set(e.target.result).then(() => {
+                        alert("Logo saved successfully!");
+                    }).catch(() => alert("Image is too large for database. Try a smaller compression."));
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        document.getElementById('excel-heading-input').addEventListener('blur', function() {
-            database.ref('portal_config/excelHeading').set(this.value);
-        });
+        function saveAdminConfig(key, value) {
+            database.ref(`portal_config/${key}`).set(value);
+        }
 
         function populateDropdowns() {
             const classDropdown = document.getElementById('class-select');
@@ -346,7 +402,7 @@
         }
 
         function deleteClassStructure(cls) {
-            if(confirm(`Delete Class ${cls} structure?`)) {
+            if(confirm(`Delete Class ${cls}?`)) {
                 delete dynamicAcademicStructure[cls];
                 database.ref('portal_config/academicStructure').set(dynamicAcademicStructure);
             }
@@ -364,12 +420,26 @@
             });
         }
 
+        function updateTickerText() {
+            const tickerContainer = document.getElementById('ticker-container');
+            const tickerText = document.getElementById('live-ticker-text');
+            tickerContainer.classList.remove('hidden');
+            
+            // Replace placeholder with actual class name
+            const finalHeadline = globalTickerText.replace('_________', `${SelectedClassKey}-${SelectedSectionKey}`);
+            
+            // Add extra spaces to make looping look continuous
+            tickerText.innerHTML = `${finalHeadline} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${finalHeadline} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${finalHeadline}`;
+        }
+
         function InitializeWorkspace(cls, sec) {
             SelectedClassKey = cls;
             SelectedSectionKey = sec;
             ActiveConfigStructure = dynamicAcademicStructure[cls];
             DatabaseReferencePath = `student_records/${cls}/${sec}`;
             document.getElementById('current-view-title').innerText = `Class Workspace: ${cls} - ${sec}`;
+            
+            updateTickerText(); // Activate Moving Headline
             GenerateTableHeaders();
             SyncCloudDataLive();
         }
@@ -378,16 +448,16 @@
             const thead = document.getElementById('table-head-row');
             if(!ActiveConfigStructure) return;
             let html = `<tr>
-                <th style="width: 80px;">Roll No</th>
-                <th style="width: 250px; text-align: left;">Student Name</th>`;
+                <th style="min-width: 80px;">Roll No</th>
+                <th style="min-width: 200px; text-align: left;">Student Name</th>`;
             ActiveConfigStructure.subjects.forEach(sub => {
-                html += `<th>${sub} <br><span class="text-[9px]">Max: ${ActiveConfigStructure.max}</span></th>`;
+                html += `<th style="min-width: 90px;">${sub} <br><span class="text-[9px]">Max: ${ActiveConfigStructure.max}</span></th>`;
             });
             html += `
-                <th class="bg-indigo-950 text-white">Total</th>
-                <th class="bg-indigo-950 text-white">%age</th>
-                <th class="bg-amber-500 text-slate-900">Rank</th>`;
-            if(ActiveUserRole === 'admin') html += `<th class="bg-rose-900 text-white">Action</th>`;
+                <th class="bg-indigo-950 text-white" style="min-width: 80px;">Total</th>
+                <th class="bg-indigo-950 text-white" style="min-width: 80px;">%age</th>
+                <th class="bg-amber-500 text-slate-900" style="min-width: 80px;">Rank</th>`;
+            if(ActiveUserRole === 'admin') html += `<th class="bg-rose-900 text-white" style="min-width: 80px;">Action</th>`;
             html += `</tr>`;
             thead.innerHTML = html;
         }
@@ -455,54 +525,36 @@
         }
         function purgeRecord(id) { if(confirm("Delete permanently?")) database.ref(`${DatabaseReferencePath}/${id}`).remove(); }
 
-        // ========================================================
-        // 🎨 EXCELJS: PROFESSIONAL COLORED EXCEL EXPORT ENGINE
-        // ========================================================
+        // EXCEL EXPORT ENGINE
         async function exportProfessionalExcel() {
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet(`Class ${SelectedClassKey}-${SelectedSectionKey}`);
 
-            // Fetch Headers dynamically
             const table = document.getElementById('marks-entry-table');
             const htmlHeaders = Array.from(table.querySelectorAll("th")).map(th => th.innerText.split('\n')[0].trim());
-            if(ActiveUserRole === 'admin') htmlHeaders.pop(); // Remove "Action" column
+            if(ActiveUserRole === 'admin') htmlHeaders.pop(); 
 
             const totalCols = htmlHeaders.length;
 
-            // 1. Setup Column Widths for professional look
-            let cols = [{ width: 12 }, { width: 35 }]; // Roll No, Name
+            let cols = [{ width: 12 }, { width: 35 }]; 
             for(let i = 2; i < totalCols; i++) cols.push({ width: 15 });
             sheet.columns = cols;
 
-            // 2. Insert School Logo (If Available)
             if (globalSchoolLogoBase64) {
-                // Determine image extension
                 const extensionMatch = globalSchoolLogoBase64.match(/^data:image\/(png|jpeg|jpg);base64,/);
                 const ext = extensionMatch ? extensionMatch[1] : 'png';
-                
-                const imageId = workbook.addImage({
-                    base64: globalSchoolLogoBase64,
-                    extension: ext,
-                });
-                
-                // Add image to top left (Cell A1), spanning across a bit
-                sheet.addImage(imageId, {
-                    tl: { col: 0, row: 0 },
-                    ext: { width: 100, height: 100 }
-                });
+                const imageId = workbook.addImage({ base64: globalSchoolLogoBase64, extension: ext });
+                sheet.addImage(imageId, { tl: { col: 0, row: 0 }, ext: { width: 100, height: 100 } });
             }
 
-            // 3. Create Main Headers (Merged Cells)
-            // Leave Row 1-4 for Headers/Logo
-            sheet.mergeCells(1, 2, 1, totalCols); // Merge from Col 2 (B) to end
+            sheet.mergeCells(1, 2, 1, totalCols); 
             const titleCell = sheet.getCell(1, 2);
             titleCell.value = "RAVENWOOD INTERNATIONAL SCHOOL";
             titleCell.font = { name: 'Arial', size: 18, bold: true, color: { argb: 'FF1E293B' } };
             titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
             sheet.mergeCells(2, 2, 2, totalCols);
-            const subHeadingTemplate = document.getElementById('excel-heading-input').value;
-            const subHeadingText = subHeadingTemplate.replace('_________', `Class ${SelectedClassKey}-${SelectedSectionKey}`);
+            const subHeadingText = globalExcelHeading.replace('_________', `Class ${SelectedClassKey}-${SelectedSectionKey}`);
             const subCell = sheet.getCell(2, 2);
             subCell.value = subHeadingText;
             subCell.font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF334155' } };
@@ -514,19 +566,15 @@
             detailCell.font = { name: 'Arial', size: 10, italic: true, color: { argb: 'FF64748B' } };
             detailCell.alignment = { vertical: 'middle', horizontal: 'center' };
 
-            // Row 4 is blank/spacer.
-            // Adjust row heights for spacing
             sheet.getRow(1).height = 30;
             sheet.getRow(2).height = 25;
             sheet.getRow(3).height = 20;
             sheet.getRow(4).height = 15;
 
-            // 4. Set Table Header Row (Row 5)
             const headerRow = sheet.getRow(5);
             headerRow.values = htmlHeaders;
             headerRow.height = 25;
             
-            // Style Header Row (Dark Blue Background, White Bold Text)
             headerRow.eachCell((cell, colNumber) => {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
                 cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 12 };
@@ -534,7 +582,6 @@
                 cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
             });
 
-            // 5. Fill Student Data
             const rows = Array.from(table.querySelectorAll("tbody tr"));
             let currentRowNum = 6;
 
@@ -543,29 +590,25 @@
                 row.querySelectorAll("input").forEach(inp => rowData.push(inp.value));
                 const tds = row.querySelectorAll("td");
                 let offset = (ActiveUserRole === 'admin') ? 1 : 0;
-                rowData.push(tds[tds.length - 3 - offset].innerText); // Total
-                rowData.push(tds[tds.length - 2 - offset].innerText); // %age
-                rowData.push(tds[tds.length - 1 - offset].innerText); // Rank
+                rowData.push(tds[tds.length - 3 - offset].innerText); 
+                rowData.push(tds[tds.length - 2 - offset].innerText); 
+                rowData.push(tds[tds.length - 1 - offset].innerText); 
 
                 const dataRow = sheet.getRow(currentRowNum);
                 dataRow.values = rowData;
                 
-                // Style Data Row
                 dataRow.eachCell((cell, colNum) => {
                     cell.alignment = { vertical: 'middle', horizontal: colNum === 2 ? 'left' : 'center' };
                     cell.border = { top: {style:'thin', color: {argb:'FFE2E8F0'}}, left: {style:'thin', color: {argb:'FFE2E8F0'}}, bottom: {style:'thin', color: {argb:'FFE2E8F0'}}, right: {style:'thin', color: {argb:'FFE2E8F0'}} };
                     
-                    // Highlight Total, %, Rank logic
                     if (colNum >= totalCols - 2) {
-                        // Highlight Total & Percentage & Rank
                         cell.font = { bold: true, color: { argb: 'FF1E3A8A' } };
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0Fdf4' } }; // Light green/blue
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0Fdf4' } }; 
                     }
                 });
                 currentRowNum++;
             });
 
-            // 6. Generate and Download
             const buffer = await workbook.xlsx.writeBuffer();
             saveAs(new Blob([buffer]), `Class_${SelectedClassKey}_${SelectedSectionKey}_Designed_Report.xlsx`);
         }
