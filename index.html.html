@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ravenwood Results Portal</title>
+    <title>Ravenwood Premium Results Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -11,102 +11,155 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        .missing-mark { background-color: #fee2e2 !important; border: 2px solid #ef4444 !important; }
-        table { border-collapse: collapse; width: 100%; min-width: 1000px; }
-        th, td { border: 1px solid #d1d5db; padding: 10px; text-align: center; font-size: 14px; }
-        th { background-color: #f3f4f6; color: #1f2937; font-weight: 600; }
-        input { width: 100%; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 500; }
-        input:focus { outline: 2px solid #3b82f6; background: #fff; border-radius: 4px; }
+        body { font-family: 'Inter', sans-serif; }
+        .missing-mark { background-color: #fef2f2 !important; border: 2px solid #ef4444 !important; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        th { background-color: #1e293b; color: #f8fafc; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; padding: 12px 8px; border: 1px solid #334155; }
+        td { border: 1px solid #e2e8f0; padding: 6px 4px; text-align: center; font-size: 14px; background-color: #fff; }
+        tr:hover td { background-color: #f8fafc; }
+        input { width: 100%; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 500; color: #334155; }
+        input:focus { outline: 2px solid #6366f1; background: #fff; border-radius: 6px; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .admin-tab-btn.active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 700; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col">
 
-    <header class="bg-indigo-950 text-white p-4 shadow-lg flex justify-between items-center px-8">
+    <header class="bg-slate-900 text-white shadow-xl flex justify-between items-center px-8 py-4 border-b border-slate-800">
         <div class="flex items-center gap-4">
-            <img id="display-logo" src="https://via.placeholder.com/60" alt="Logo" class="h-14 w-14 rounded-full object-cover bg-white p-1 border">
+            <img id="display-logo" src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=120" alt="School Logo" class="h-14 w-14 rounded-xl object-cover bg-white p-1 shadow-inner border border-slate-700">
             <div>
-                <h1 class="text-2xl font-bold tracking-wide">RAVENWOOD INTERNATIONAL SCHOOL</h1>
-                <p class="text-xs text-indigo-200 tracking-wider">Academic Session 2026-27</p>
+                <h1 id="app-school-name" class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">RAVENWOOD INTERNATIONAL SCHOOL</h1>
+                <p class="text-xs text-indigo-400 font-medium tracking-widest uppercase mt-0.5">Automated Cloud Examination Desk</p>
             </div>
         </div>
-        <div class="flex items-center gap-4">
-            <div id="connection-status" class="px-3 py-1.5 rounded-full text-xs font-bold shadow-sm bg-yellow-100 text-yellow-700 border border-yellow-300">
-                ⏳ Checking Connection...
+        <div class="flex items-center gap-6">
+            <div id="connection-status" class="px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                ⏳ Synchronizing Matrix...
             </div>
-            <button id="logout-btn" class="hidden bg-rose-600 hover:bg-rose-700 px-5 py-2 rounded-lg text-sm font-bold transition shadow" onclick="logout()">Logout</button>
+            <button id="logout-btn" class="hidden bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all transform hover:scale-105 shadow-lg shadow-rose-950" onclick="logout()">Exit Portal</button>
         </div>
     </header>
 
-    <main id="login-section" class="flex-grow flex justify-center items-center p-4">
-        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
-            <h2 class="text-2xl font-bold mb-6 text-center text-slate-800 border-b pb-3">Portal Login</h2>
+    <main id="login-section" class="flex-grow flex justify-center items-center p-6 bg-gradient-to-b from-slate-900 to-slate-950 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div class="bg-white/95 backdrop-blur p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200/50 relative z-10">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-black tracking-tight text-slate-800">Secure Gateway</h2>
+                <p class="text-sm text-slate-500 mt-1">Select authorization level to manage academic lists</p>
+            </div>
             
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-2 text-slate-600">Select Role:</label>
-                <select id="role-select" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 focus:outline-none focus:border-indigo-500" onchange="toggleLoginFields()">
-                    <option value="teacher">Teacher / Data Entry</option>
-                    <option value="admin">Administrator</option>
+            <div class="mb-5">
+                <label class="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-500">Authorization Scope:</label>
+                <select id="role-select" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" onchange="toggleLoginFields()">
+                    <option value="teacher">Standard Faculty Entry</option>
+                    <option value="admin">Central Administrator Desk</option>
                 </select>
             </div>
 
             <div id="teacher-fields" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-semibold mb-1 text-slate-600">Class:</label>
-                    <select id="class-select" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 focus:outline-none focus:border-indigo-500" onchange="updateSectionsDropdown()">
-                        <option value="">-- Select Class --</option>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">Target Class:</label>
+                    <select id="class-select" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" onchange="updateSectionsDropdown()">
+                        <option value="">-- Choose Class --</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold mb-1 text-slate-600">Section:</label>
-                    <select id="section-select" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 focus:outline-none focus:border-indigo-500">
-                        <option value="">-- Select Section --</option>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">Target Section Assigned:</label>
+                    <select id="section-select" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        <option value="">-- Choose Section --</option>
                     </select>
                 </div>
             </div>
 
             <div id="admin-fields" class="hidden mb-4">
-                <label class="block text-sm font-semibold mb-1 text-slate-600">Admin Password:</label>
-                <input type="password" id="admin-pass" placeholder="Enter Password (1234)" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 text-left focus:outline-none focus:border-indigo-500">
+                <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">Security Password Key:</label>
+                <input type="password" id="admin-pass" placeholder="••••••••" class="w-full border border-slate-300 p-3 rounded-xl bg-slate-50 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition tracking-widest">
             </div>
 
-            <button onclick="login()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg mt-6 transition shadow-md">Enter Dashboard</button>
+            <button onclick="login()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white font-bold py-3.5 rounded-xl mt-6 transition-all transform hover:scale-[1.02] shadow-xl shadow-indigo-200 text-sm uppercase tracking-wider">Initialize Workspace</button>
         </div>
     </main>
 
-    <main id="dashboard-section" class="hidden flex-grow p-6 max-w-[95%] mx-auto w-full space-y-6">
+    <main id="dashboard-section" class="hidden flex-grow p-6 max-w-[98%] mx-auto w-full space-y-6">
         
-        <div id="admin-controls" class="hidden bg-white p-6 rounded-2xl shadow border border-slate-100 space-y-4">
-            <h3 class="font-bold text-lg text-indigo-950 border-b pb-2 flex items-center gap-2">⚙️ Admin Configuration</h3>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
-                <div class="lg:col-span-2">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Excel Heading Template:</label>
-                    <input type="text" id="excel-heading-input" value="PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 focus:outline-none focus:border-indigo-500">
+        <div id="admin-controls" class="hidden bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="border-b border-slate-200 bg-slate-50 px-6 py-2 flex gap-6">
+                <button class="admin-tab-btn active py-3 text-sm font-semibold transition" onclick="switchAdminTab('data-view')">👁️ Live Marks Console</button>
+                <button class="admin-tab-btn py-3 text-sm font-semibold transition" onclick="switchAdminTab('structure-view')">🛠️ School Structure Manager</button>
+                <button class="admin-tab-btn py-3 text-sm font-semibold transition" onclick="switchAdminTab('branding-view')">🎨 Identity & Headers</button>
+            </div>
+
+            <div id="admin-tab-data-view" class="p-6 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                    <div>
+                        <h4 class="font-bold text-indigo-950 text-base">Extract & Monitor Single Class Metrics</h4>
+                        <p class="text-xs text-indigo-600">Choose any dynamic class configuration to audit or overwrite real-time scores.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select id="admin-class-select" class="border border-slate-300 p-2 rounded-xl bg-white font-semibold text-sm focus:outline-none" onchange="updateAdminSections()"></select>
+                        <select id="admin-section-select" class="border border-slate-300 p-2 rounded-xl bg-white font-semibold text-sm focus:outline-none"></select>
+                        <button class="bg-indigo-600 text-white px-5 py-2 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-indigo-700 transition shadow" onclick="loadAdminSelectedClass()">Load Target Data</button>
+                    </div>
                 </div>
-                <div>
-                    <button class="w-full bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-emerald-700 transition shadow" onclick="alert('Export all feature ready for integration')">Export All Classes</button>
+            </div>
+
+            <div id="admin-tab-structure-view" class="hidden p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border border-slate-200 p-5 rounded-2xl bg-slate-50/50 space-y-3">
+                        <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide border-b pb-2">Create / Add New Class Module</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="new-class-name" placeholder="e.g. XI" class="bg-white border p-2 rounded-xl text-left font-semibold">
+                            <input type="number" id="new-class-max" placeholder="Max Marks (e.g. 50)" class="bg-white border p-2 rounded-xl text-left font-semibold">
+                        </div>
+                        <input type="text" id="new-class-subjects" placeholder="Subjects (Comma separated: English, Maths, Art)" class="w-full bg-white border p-2 rounded-xl text-left text-xs">
+                        <input type="text" id="new-class-sections" placeholder="Sections (Comma separated: ALPHA, BETA)" class="w-full bg-white border p-2 rounded-xl text-left text-xs">
+                        <button class="bg-slate-900 text-white w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wide hover:bg-slate-800 transition" onclick="saveNewClassStructure()">Commit New Class Structure</button>
+                    </div>
+                    <div class="border border-slate-200 p-5 rounded-2xl bg-slate-50/50 space-y-2">
+                        <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide border-b pb-2">Active Operational Configurations</h4>
+                        <div id="active-structures-list" class="text-xs space-y-2 max-h-48 overflow-y-auto pr-2">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-tab-branding-view" class="hidden p-6 space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                    <div class="lg:col-span-2 space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Dynamic Export Excel Heading Layout:</label>
+                        <input type="text" id="excel-heading-input" value="PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)" class="w-full border border-slate-300 p-3 rounded-xl text-left bg-slate-50 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Cloud Server Institution Logo Asset URL:</label>
+                        <input type="text" id="logo-url-input" placeholder="Paste raw link to image asset" class="w-full border border-slate-300 p-3 rounded-xl text-left bg-slate-50 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500" onblur="commitGlobalIdentity(this.value)">
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow border border-slate-100 overflow-hidden">
-            <div class="bg-slate-50 p-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-900 px-6 py-5 flex flex-wrap justify-between items-center gap-4 border-b border-slate-800">
                 <div>
-                    <h2 id="current-view-title" class="text-xl font-bold text-slate-800">Class Workspace</h2>
-                    <p class="text-xs text-slate-500 mt-0.5" id="sync-status">🟢 System Ready - Realtime Sync</p>
+                    <h2 id="current-view-title" class="text-xl font-black text-white tracking-wide">Select Space Parameters</h2>
+                    <p class="text-xs text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Cloud Stream Socket Secure (Auto-Saving Mode Committed)
+                    </p>
                 </div>
                 <div class="flex gap-3">
-                    <button class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center gap-2 shadow" onclick="addNewStudentRow()">
-                        <span class="text-lg leading-none">+</span> Add Student Row
+                    <button class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition text-xs flex items-center gap-2 shadow-lg shadow-indigo-950 uppercase tracking-wider" onclick="addNewStudentRow()">
+                        <span>+</span> Add Student Profile Row
                     </button>
-                    <button class="bg-emerald-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition flex items-center gap-2 shadow" onclick="exportCurrentClassToExcel()">
-                        <span>📥</span> Export Print Excel
+                    <button class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-700 transition text-xs flex items-center gap-2 shadow-lg shadow-emerald-950 uppercase tracking-wider" onclick="exportCurrentClassToExcel()">
+                        <span>📥</span> Export Professional Print Spreadsheet
                     </button>
                 </div>
             </div>
             
-            <div class="overflow-x-auto w-full p-4">
-                <table id="marks-entry-table">
+            <div class="overflow-x-auto w-full p-6 bg-slate-50/50">
+                <table id="marks-entry-table" class="shadow-sm rounded-xl overflow-hidden border border-slate-200">
                     <thead id="table-head-row"></thead>
                     <tbody id="table-body-rows"></tbody>
                 </table>
@@ -116,7 +169,7 @@
 
     <script>
         // ========================================================
-        // 🔥 YOUR PERFECTLY CONFIGURED FIREBASE SETTINGS 🔥
+        // 🚨 LIVE SECURE PLATFORM CONFIGURATION INTERFACE 🚨
         // ========================================================
         const firebaseConfig = {
             apiKey: "AIzaSyB5RV8tLsLZD6h1tsm_PxWnxrRZyylQY3k",
@@ -131,20 +184,8 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Database Connection Tracker
-        const connectedRef = database.ref(".info/connected");
-        connectedRef.on("value", (snap) => {
-            const statusEl = document.getElementById('connection-status');
-            if (snap.val() === true) {
-                statusEl.className = "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-emerald-100 text-emerald-700 border border-emerald-300";
-                statusEl.innerText = "🟢 Database Connected";
-            } else {
-                statusEl.className = "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-rose-100 text-rose-700 border border-rose-300";
-                statusEl.innerText = "🔴 Disconnected! Check URL/Rules";
-            }
-        });
-
-        const academicStructure = {
+        // Standard Default Fallback Structures Mapping
+        const defaultAcademicStructure = {
             "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
             "II": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["EARTH", "JUPITER", "MARS", "NEPTUNE", "VENUS"] },
             "III": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["AMAZON", "BEAS", "INDUS", "NILE", "THAMES"] },
@@ -157,21 +198,72 @@
             "X": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 40, sections: ["WORDSWORTH"] }
         };
 
+        let dynamicAcademicStructure = {};
         let ActiveUserRole = "teacher";
         let SelectedClassKey = "";
         let SelectedSectionKey = "";
         let DatabaseReferencePath = "";
         let ActiveConfigStructure = null;
+        let globalSchoolLogo = "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=120";
 
-        window.onload = () => {
+        // Listen for Real-Time Socket Connections
+        database.ref(".info/connected").on("value", (snap) => {
+            const statusEl = document.getElementById('connection-status');
+            if (snap.val() === true) {
+                statusEl.className = "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                statusEl.innerText = "⚡ System Matrix Active";
+            } else {
+                statusEl.className = "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                statusEl.innerText = "🛑 Offline Protocol Native";
+            }
+        });
+
+        // Initialize Structural Configurations from Live Server Engine
+        database.ref('portal_config').on('value', (snap) => {
+            let conf = snap.val();
+            
+            if(!conf || !conf.academicStructure) {
+                // Initialize default map on server cluster if missing
+                database.ref('portal_config/academicStructure').set(defaultAcademicStructure);
+                dynamicAcademicStructure = defaultAcademicStructure;
+            } else {
+                dynamicAcademicStructure = conf.academicStructure;
+            }
+
+            if(conf) {
+                if(conf.excelHeading) document.getElementById('excel-heading-input').value = conf.excelHeading;
+                if(conf.logoUrl) {
+                    document.getElementById('logo-url-input').value = conf.logoUrl;
+                    document.getElementById('display-logo').src = conf.logoUrl;
+                    globalSchoolLogo = conf.logoUrl;
+                }
+            }
+            populateDropdowns();
+            renderActiveStructures();
+        });
+
+        function populateDropdowns() {
             const classDropdown = document.getElementById('class-select');
-            Object.keys(academicStructure).forEach(cls => {
+            const adminClassDropdown = document.getElementById('admin-class-select');
+            
+            // Backup selection keys
+            let currentTeacherClass = classDropdown.value;
+            let currentAdminClass = adminClassDropdown.value;
+
+            classDropdown.innerHTML = '<option value="">-- Choose Class --</option>';
+            adminClassDropdown.innerHTML = '';
+            
+            Object.keys(dynamicAcademicStructure).forEach(cls => {
                 let opt = document.createElement('option');
-                opt.value = cls;
-                opt.innerText = `Class ${cls}`;
-                classDropdown.appendChild(opt);
+                opt.value = cls; opt.innerText = `Class ${cls}`;
+                classDropdown.appendChild(opt.cloneNode(true));
+                adminClassDropdown.appendChild(opt);
             });
-        };
+
+            if(currentTeacherClass) classDropdown.value = currentTeacherClass;
+            if(currentAdminClass) adminClassDropdown.value = currentAdminClass;
+            updateAdminSections();
+        }
 
         function toggleLoginFields() {
             const role = document.getElementById('role-select').value;
@@ -187,15 +279,38 @@
         function updateSectionsDropdown() {
             const cls = document.getElementById('class-select').value;
             const secDropdown = document.getElementById('section-select');
-            secDropdown.innerHTML = '<option value="">-- Select Section --</option>';
-            if(cls && academicStructure[cls]) {
-                academicStructure[cls].sections.forEach(sec => {
+            secDropdown.innerHTML = '<option value="">-- Choose Section --</option>';
+            if(cls && dynamicAcademicStructure[cls] && dynamicAcademicStructure[cls].sections) {
+                dynamicAcademicStructure[cls].sections.forEach(sec => {
                     let opt = document.createElement('option');
-                    opt.value = sec;
-                    opt.innerText = sec;
+                    opt.value = sec; opt.innerText = sec;
                     secDropdown.appendChild(opt);
                 });
             }
+        }
+
+        function updateAdminSections() {
+            const cls = document.getElementById('admin-class-select').value;
+            const secDropdown = document.getElementById('admin-section-select');
+            secDropdown.innerHTML = '';
+            if(cls && dynamicAcademicStructure[cls] && dynamicAcademicStructure[cls].sections) {
+                dynamicAcademicStructure[cls].sections.forEach(sec => {
+                    let opt = document.createElement('option');
+                    opt.value = sec; opt.innerText = sec;
+                    secDropdown.appendChild(opt);
+                });
+            }
+        }
+
+        function switchAdminTab(tabId) {
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('admin-tab-data-view').classList.add('hidden');
+            document.getElementById('admin-tab-structure-view').classList.add('hidden');
+            document.getElementById('admin-tab-branding-view').classList.add('hidden');
+            
+            document.getElementById(`admin-tab-${tabId}`).classList.remove('hidden');
         }
 
         function login() {
@@ -204,14 +319,17 @@
                 if(document.getElementById('admin-pass').value === '1234') {
                     ActiveUserRole = 'admin';
                     document.getElementById('admin-controls').classList.remove('hidden');
-                    InitializeWorkspace('I', 'DAFFODILS');
+                    // Pick default starting dashboard matrix
+                    let defaultClass = Object.keys(dynamicAcademicStructure)[0];
+                    let defaultSec = dynamicAcademicStructure[defaultClass]?.sections?.[0] || 'A';
+                    InitializeWorkspace(defaultClass, defaultSec);
                 } else {
-                    alert('Invalid Password!'); return;
+                    alert('Security Check Failed: Invalid Administrative Key!'); return;
                 }
             } else {
                 const cls = document.getElementById('class-select').value;
                 const sec = document.getElementById('section-select').value;
-                if(!cls || !sec) { alert('Please choose Class and Section.'); return; }
+                if(!cls || !sec) { alert('Please establish Class/Section boundaries.'); return; }
                 ActiveUserRole = 'teacher';
                 document.getElementById('admin-controls').classList.add('hidden');
                 InitializeWorkspace(cls, sec);
@@ -223,12 +341,76 @@
 
         function logout() { location.reload(); }
 
+        function loadAdminSelectedClass() {
+            const cls = document.getElementById('admin-class-select').value;
+            const sec = document.getElementById('admin-section-select').value;
+            if(cls && sec) InitializeWorkspace(cls, sec);
+        }
+
+        function commitGlobalIdentity(url) {
+            if(url) database.ref('portal_config/logoUrl').set(url);
+        }
+
+        document.getElementById('excel-heading-input').addEventListener('blur', function() {
+            database.ref('portal_config/excelHeading').set(this.value);
+        });
+
+        // Add / Modify Dynamic Structure Configurations Live
+        function saveNewClassStructure() {
+            const clsName = document.getElementById('new-class-name').value.trim().toUpperCase();
+            const maxMarks = Number(document.getElementById('new-class-max').value);
+            const subs = document.getElementById('new-class-subjects').value.split(',').map(s => s.trim());
+            const secs = document.getElementById('new-class-sections').value.split(',').map(s => s.trim().toUpperCase());
+
+            if(!clsName || !maxMarks || subs.length === 0 || secs.length === 0) {
+                alert("Validation Fault: Ensure all configuration vectors contain data points!"); return;
+            }
+
+            dynamicAcademicStructure[clsName] = { subjects: subs, max: maxMarks, sections: secs };
+            database.ref('portal_config/academicStructure').set(dynamicAcademicStructure).then(() => {
+                alert(`Configuration Success: Class Modules for ${clsName} registered onto data servers!`);
+                document.getElementById('new-class-name').value = '';
+                document.getElementById('new-class-max').value = '';
+                document.getElementById('new-class-subjects').value = '';
+                document.getElementById('new-class-sections').value = '';
+            });
+        }
+
+        function deleteClassStructure(cls) {
+            if(confirm(`Purge Matrix Confirmation: Erase all structure definitions for Class ${cls}?`)) {
+                delete dynamicAcademicStructure[cls];
+                database.ref('portal_config/academicStructure').set(dynamicAcademicStructure);
+            }
+        }
+
+        function renderActiveStructures() {
+            const container = document.getElementById('active-structures-list');
+            container.innerHTML = '';
+            Object.keys(dynamicAcademicStructure).forEach(cls => {
+                let div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm mb-1.5";
+                div.innerHTML = `
+                    <div>
+                        <span class="font-extrabold text-slate-800">Class ${cls}</span> 
+                        <span class="text-slate-400 mx-1">|</span> Max: ${dynamicAcademicStructure[cls].max} <br>
+                        <span class="text-[10px] text-slate-500 font-medium">Subs: ${dynamicAcademicStructure[cls].subjects.join(', ')}</span>
+                    </div>
+                    <button class="text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg font-bold hover:bg-rose-100 transition" onclick="deleteClassStructure('${cls}')">Delete</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ========================================================
+        // CORE INTEGRATED DATA MANAGEMENT CONTROL MATRIX
+        // ========================================================
         function InitializeWorkspace(cls, sec) {
             SelectedClassKey = cls;
             SelectedSectionKey = sec;
-            ActiveConfigStructure = academicStructure[cls];
+            ActiveConfigStructure = dynamicAcademicStructure[cls];
             DatabaseReferencePath = `student_records/${cls}/${sec}`;
-            document.getElementById('current-view-title').innerText = `Class Workspace: ${cls} - ${sec}`;
+            
+            document.getElementById('current-view-title').innerText = `Class Operational Deck: ${cls} - Section ${sec}`;
             
             GenerateTableHeaders();
             SyncCloudDataLive();
@@ -236,22 +418,25 @@
 
         function GenerateTableHeaders() {
             const thead = document.getElementById('table-head-row');
+            if(!ActiveConfigStructure) return;
+            
             let html = `<tr>
-                <th style="width: 80px;">Roll No</th>
-                <th style="width: 250px; text-align: left;">Student Name</th>`;
+                <th style="width: 100px;">Roll No</th>
+                <th style="width: 280px; text-align: left;">Student Profile Name</th>`;
                 
             ActiveConfigStructure.subjects.forEach(sub => {
                 let isArt = sub.toLowerCase() === 'art';
                 let label = isArt ? 'Grade' : `Max: ${ActiveConfigStructure.max}`;
-                html += `<th>${sub} <br><span class="text-[10px] text-slate-500 font-normal">(${label})</span></th>`;
+                html += `<th>${sub} <br><span class="text-[9px] text-slate-400 font-normal lowercase">(${label})</span></th>`;
             });
 
+            // Constraint Check Override: Metrics explicitly localized at ultimate end boundary
             html += `
-                <th class="bg-indigo-100 text-indigo-900 border-indigo-200">Total</th>
-                <th class="bg-indigo-100 text-indigo-900 border-indigo-200">%age</th>
-                <th class="bg-amber-100 text-amber-900 border-amber-200">Rank</th>`;
+                <th class="bg-indigo-950 text-indigo-100 border-slate-800">Total</th>
+                <th class="bg-indigo-950 text-indigo-100 border-slate-800">%age</th>
+                <th class="bg-amber-500 text-slate-950 border-amber-600 font-extrabold">Rank</th>`;
                 
-            if(ActiveUserRole === 'admin') html += `<th class="bg-rose-100 text-rose-700">Actions</th>`;
+            if(ActiveUserRole === 'admin') html += `<th class="bg-rose-950 text-rose-200 border-slate-800">Action Matrix</th>`;
             html += `</tr>`;
             thead.innerHTML = html;
         }
@@ -261,15 +446,13 @@
             database.ref(DatabaseReferencePath).on('value', (snapshot) => {
                 const records = snapshot.val() || {};
                 RenderDataMatrix(records);
-            }, (error) => {
-                console.error("Firebase Auth Error: ", error);
-                alert("Firebase Error: Connection refused. Please check if Database URL is correct and Rules are set to true.");
             });
         }
 
         function RenderDataMatrix(records) {
             const tbody = document.getElementById('table-body-rows');
             tbody.innerHTML = '';
+            if(!ActiveConfigStructure) return;
             
             let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
             
@@ -293,7 +476,7 @@
                 
                 let rowHtml = `
                     <td class="${rollClass}"><input type="number" placeholder="Roll" value="${student.rollNo || ''}" onblur="commitCellChange('${student.id}', 'rollNo', this.value)" oninput="evaluateHighlight(this)"></td>
-                    <td class="${nameClass}"><input type="text" placeholder="Enter Name" style="text-align: left;" value="${student.name || ''}" onblur="commitCellChange('${student.id}', 'name', this.value)" oninput="evaluateHighlight(this)"></td>
+                    <td class="${nameClass}"><input type="text" placeholder="Enter Full Name" style="text-align: left;" value="${student.name || ''}" onblur="commitCellChange('${student.id}', 'name', this.value)" oninput="evaluateHighlight(this)"></td>
                 `;
 
                 ActiveConfigStructure.subjects.forEach(sub => {
@@ -309,13 +492,13 @@
                 const percentage = grandTotal > 0 ? ((student.calculatedTotal / grandTotal) * 100).toFixed(1) + '%' : '0.0%';
 
                 rowHtml += `
-                    <td class="bg-indigo-50 font-bold text-indigo-900 border-indigo-200">${student.calculatedTotal}</td>
-                    <td class="bg-indigo-50 font-bold text-indigo-900 border-indigo-200">${percentage}</td>
-                    <td class="bg-amber-50 font-black text-amber-700 border-amber-200">${student.calculatedTotal > 0 ? index + 1 : '-'}</td>
+                    <td class="bg-indigo-50/80 font-bold text-indigo-950">${student.calculatedTotal}</td>
+                    <td class="bg-indigo-50/80 font-semibold text-indigo-950">${percentage}</td>
+                    <td class="bg-amber-500/10 font-black text-amber-700">${student.calculatedTotal > 0 ? index + 1 : '-'}</td>
                 `;
 
                 if(ActiveUserRole === 'admin') {
-                    rowHtml += `<td><button class="text-rose-600 font-bold text-xs bg-rose-50 px-2 py-1 rounded border border-rose-200 hover:bg-rose-100" onclick="purgeRecord('${student.id}')">Delete</button></td>`;
+                    rowHtml += `<td><button class="text-rose-600 font-semibold text-xs bg-rose-50 border border-rose-200 px-3 py-1 rounded-xl hover:bg-rose-100 transition" onclick="purgeRecord('${student.id}')">Purge</button></td>`;
                 }
 
                 tr.innerHTML = rowHtml;
@@ -330,37 +513,42 @@
 
         function validateMaxConstraint(el, sub) {
             if(sub.toLowerCase() !== 'art' && Number(el.value) > ActiveConfigStructure.max) {
-                alert(`Max limit is ${ActiveConfigStructure.max} for ${sub}!`);
+                alert(`Boundary Overflow: Maximum parameters are restricted to ${ActiveConfigStructure.max} for ${sub}!`);
                 el.value = ActiveConfigStructure.max;
             }
         }
 
         function commitCellChange(id, field, val) {
-            database.ref(`${DatabaseReferencePath}/${id}/${field}`).set(val).catch(e => alert("Save failed! Network issue."));
+            database.ref(`${DatabaseReferencePath}/${id}/${field}`).set(val);
         }
 
         function addNewStudentRow() {
-            try {
-                const rowRef = database.ref(DatabaseReferencePath).push();
-                let payload = { rollNo: "", name: "" };
-                ActiveConfigStructure.subjects.forEach(sub => { payload[sub] = ""; });
-                rowRef.set(payload).catch(e => alert("Could not create row! Check Firebase Rules (must be true)"));
-            } catch(error) {
-                alert("System error. Refresh the page.");
-            }
+            if(!ActiveConfigStructure) return;
+            const rowRef = database.ref(DatabaseReferencePath).push();
+            let payload = { rollNo: "", name: "" };
+            ActiveConfigStructure.subjects.forEach(sub => { payload[sub] = ""; });
+            rowRef.set(payload);
         }
 
         function purgeRecord(id) {
-            if(confirm("Delete this student permanently?")) {
+            if(confirm("Matrix Command: Erase selected profile node completely from cloud structure?")) {
                 database.ref(`${DatabaseReferencePath}/${id}`).remove();
             }
         }
 
+        // ========================================================
+        // 📥 DYNAMIC DESIGN GRAPH EXCEL SPREADSHEET ENGINE 📥
+        // ========================================================
         function exportCurrentClassToExcel() {
             const template = document.getElementById('excel-heading-input').value;
             const finalHeading = template.replace('_________', `Class ${SelectedClassKey}-${SelectedSectionKey}`);
             
-            const wbData = [ ["RAVENWOOD INTERNATIONAL SCHOOL"], [finalHeading], [] ];
+            // Build executive analytical structures row collections
+            const wbData = [];
+            wbData.push(["RAVENWOOD INTERNATIONAL SCHOOL"]);
+            wbData.push([finalHeading]);
+            wbData.push(["Academic Session 2026-27 | Live Evaluation Record Ledger"]);
+            wbData.push([]); // Elegant spacer layout parameter row
             
             const table = document.getElementById('marks-entry-table');
             const headers = Array.from(table.querySelectorAll("th")).map(th => th.innerText.split('\n')[0].trim());
@@ -373,6 +561,7 @@
                 row.querySelectorAll("input").forEach(inp => rowData.push(inp.value));
                 const tds = row.querySelectorAll("td");
                 let offset = (ActiveUserRole === 'admin') ? 1 : 0;
+                
                 rowData.push(tds[tds.length - 3 - offset].innerText);
                 rowData.push(tds[tds.length - 2 - offset].innerText);
                 rowData.push(tds[tds.length - 1 - offset].innerText);
@@ -380,9 +569,24 @@
             });
 
             const ws = XLSX.utils.aoa_to_sheet(wbData);
+
+            // High Fidelity Design Structural Spacers Alignment Formatting
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }, // Merge School Title Across All Data Length Bounds
+                { s: { r: 1, c: 0 }, e: { r: 1, c: headers.length - 1 } }, // Merge Subtitle Template
+                { s: { r: 2, c: 0 }, e: { r: 2, c: headers.length - 1 } }  // Merge Metadata Session
+            ];
+
+            // Define custom high fidelity grid column spacing metrics
+            const columnWidths = [{ wch: 12 }, { wch: 32 }]; // Generous padding boundary allocations for Roll No & Full Names
+            for(let i = 2; i < headers.length; i++) {
+                columnWidths.push({ wch: 14 }); // Set perfect clean display cell width matrices for metrics columns
+            }
+            ws['!cols'] = columnWidths;
+
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Result");
-            XLSX.writeFile(wb, `Class_${SelectedClassKey}_${SelectedSectionKey}_Result.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Executive Result Matrix");
+            XLSX.writeFile(wb, `Class_${SelectedClassKey}_${SelectedSectionKey}_Designed_Report.xlsx`);
         }
     </script>
 </body>
