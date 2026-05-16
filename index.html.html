@@ -16,7 +16,7 @@
         table { border-collapse: collapse; width: 100%; min-width: 1000px; }
         th, td { border: 1px solid #d1d5db; padding: 10px; text-align: center; font-size: 14px; }
         th { background-color: #f3f4f6; color: #1f2937; font-weight: 600; }
-        input { width: 100%; text-align: center; background: transparent; border: none; padding: 6px; }
+        input { width: 100%; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 500; }
         input:focus { outline: 2px solid #3b82f6; background: #fff; border-radius: 4px; }
     </style>
 </head>
@@ -30,7 +30,12 @@
                 <p class="text-xs text-indigo-200 tracking-wider">Academic Session 2026-27</p>
             </div>
         </div>
-        <button id="logout-btn" class="hidden bg-rose-600 hover:bg-rose-700 px-5 py-2 rounded-lg text-sm font-bold transition shadow" onclick="logout()">Logout</button>
+        <div class="flex items-center gap-4">
+            <div id="connection-status" class="px-3 py-1.5 rounded-full text-xs font-bold shadow-sm bg-yellow-100 text-yellow-700 border border-yellow-300">
+                ⏳ Checking Connection...
+            </div>
+            <button id="logout-btn" class="hidden bg-rose-600 hover:bg-rose-700 px-5 py-2 rounded-lg text-sm font-bold transition shadow" onclick="logout()">Logout</button>
+        </div>
     </header>
 
     <main id="login-section" class="flex-grow flex justify-center items-center p-4">
@@ -79,7 +84,7 @@
                     <input type="text" id="excel-heading-input" value="PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)" class="w-full border border-slate-300 p-2.5 rounded-lg bg-slate-50 focus:outline-none focus:border-indigo-500">
                 </div>
                 <div>
-                    <button class="w-full bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-emerald-700 transition shadow" onclick="alert('Export all classes feature triggered')">Export All Classes</button>
+                    <button class="w-full bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-emerald-700 transition shadow" onclick="alert('Export all feature ready for integration')">Export All Classes</button>
                 </div>
             </div>
         </div>
@@ -88,14 +93,14 @@
             <div class="bg-slate-50 p-4 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
                 <div>
                     <h2 id="current-view-title" class="text-xl font-bold text-slate-800">Class Workspace</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">🟢 Auto-Saving is Active</p>
+                    <p class="text-xs text-slate-500 mt-0.5" id="sync-status">🟢 System Ready - Realtime Sync</p>
                 </div>
                 <div class="flex gap-3">
-                    <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition text-sm flex items-center gap-1.5 shadow" onclick="addNewStudentRow()">
-                        + Add Student Row
+                    <button class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center gap-2 shadow" onclick="addNewStudentRow()">
+                        <span class="text-lg leading-none">+</span> Add Student Row
                     </button>
-                    <button class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition text-sm flex items-center gap-1.5 shadow" onclick="exportCurrentClassToExcel()">
-                        📥 Export Print Excel
+                    <button class="bg-emerald-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-emerald-700 transition flex items-center gap-2 shadow" onclick="exportCurrentClassToExcel()">
+                        <span>📥</span> Export Print Excel
                     </button>
                 </div>
             </div>
@@ -110,13 +115,13 @@
     </main>
 
     <script>
-        // ==========================================
-        // FIREBASE CONFIGURATION INJECTED HERE
-        // ==========================================
+        // ========================================================
+        // 🔥 YOUR PERFECTLY CONFIGURED FIREBASE SETTINGS 🔥
+        // ========================================================
         const firebaseConfig = {
             apiKey: "AIzaSyB5RV8tLsLZD6h1tsm_PxWnxrRZyylQY3k",
             authDomain: "ravenwood-exam-portal.firebaseapp.com",
-            databaseURL: "https://ravenwood-exam-portal-default-rtdb.firebaseio.com", // Added databaseURL
+            databaseURL: "https://ravenwood-exam-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "ravenwood-exam-portal",
             storageBucket: "ravenwood-exam-portal.firebasestorage.app",
             messagingSenderId: "737654590264",
@@ -126,9 +131,19 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // ==========================================
-        // SCHOOL ACADEMIC STRUCTURE (From uploaded files)
-        // ==========================================
+        // Database Connection Tracker
+        const connectedRef = database.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            const statusEl = document.getElementById('connection-status');
+            if (snap.val() === true) {
+                statusEl.className = "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-emerald-100 text-emerald-700 border border-emerald-300";
+                statusEl.innerText = "🟢 Database Connected";
+            } else {
+                statusEl.className = "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-rose-100 text-rose-700 border border-rose-300";
+                statusEl.innerText = "🔴 Disconnected! Check URL/Rules";
+            }
+        });
+
         const academicStructure = {
             "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
             "II": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["EARTH", "JUPITER", "MARS", "NEPTUNE", "VENUS"] },
@@ -189,7 +204,7 @@
                 if(document.getElementById('admin-pass').value === '1234') {
                     ActiveUserRole = 'admin';
                     document.getElementById('admin-controls').classList.remove('hidden');
-                    InitializeWorkspace('I', 'DAFFODILS'); // Default admin view
+                    InitializeWorkspace('I', 'DAFFODILS');
                 } else {
                     alert('Invalid Password!'); return;
                 }
@@ -225,18 +240,16 @@
                 <th style="width: 80px;">Roll No</th>
                 <th style="width: 250px; text-align: left;">Student Name</th>`;
                 
-            // All Subjects (including Art) go first
             ActiveConfigStructure.subjects.forEach(sub => {
                 let isArt = sub.toLowerCase() === 'art';
                 let label = isArt ? 'Grade' : `Max: ${ActiveConfigStructure.max}`;
-                html += `<th>${sub} <br><span class="text-[10px] text-slate-400 font-normal">(${label})</span></th>`;
+                html += `<th>${sub} <br><span class="text-[10px] text-slate-500 font-normal">(${label})</span></th>`;
             });
 
-            // Total, %age, Rank strictly at the end
             html += `
-                <th class="bg-indigo-100 text-indigo-900">Total</th>
-                <th class="bg-indigo-100 text-indigo-900">%age</th>
-                <th class="bg-amber-100 text-amber-900">Rank</th>`;
+                <th class="bg-indigo-100 text-indigo-900 border-indigo-200">Total</th>
+                <th class="bg-indigo-100 text-indigo-900 border-indigo-200">%age</th>
+                <th class="bg-amber-100 text-amber-900 border-amber-200">Rank</th>`;
                 
             if(ActiveUserRole === 'admin') html += `<th class="bg-rose-100 text-rose-700">Actions</th>`;
             html += `</tr>`;
@@ -244,13 +257,13 @@
         }
 
         function SyncCloudDataLive() {
-            database.ref(DatabaseReferencePath).off(); // Prevent duplicate listeners
+            database.ref(DatabaseReferencePath).off();
             database.ref(DatabaseReferencePath).on('value', (snapshot) => {
                 const records = snapshot.val() || {};
                 RenderDataMatrix(records);
             }, (error) => {
-                console.error("Firebase Error: ", error);
-                alert("Database access denied! Please check Firebase Rules.");
+                console.error("Firebase Auth Error: ", error);
+                alert("Firebase Error: Connection refused. Please check if Database URL is correct and Rules are set to true.");
             });
         }
 
@@ -260,7 +273,6 @@
             
             let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
             
-            // Calculate Totals for Ranking
             studentsList.forEach(student => {
                 let sum = 0;
                 ActiveConfigStructure.subjects.forEach(sub => {
@@ -271,7 +283,6 @@
                 student.calculatedTotal = sum;
             });
 
-            // Sort by Total (Highest first) for Rank
             studentsList.sort((a, b) => b.calculatedTotal - a.calculatedTotal);
 
             studentsList.forEach((student, index) => {
@@ -281,32 +292,30 @@
                 let nameClass = (!student.name) ? 'missing-mark' : '';
                 
                 let rowHtml = `
-                    <td class="${rollClass}"><input type="number" value="${student.rollNo || ''}" onblur="commitCellChange('${student.id}', 'rollNo', this.value)" oninput="evaluateHighlight(this)"></td>
-                    <td class="${nameClass}"><input type="text" style="text-align: left;" value="${student.name || ''}" onblur="commitCellChange('${student.id}', 'name', this.value)" oninput="evaluateHighlight(this)"></td>
+                    <td class="${rollClass}"><input type="number" placeholder="Roll" value="${student.rollNo || ''}" onblur="commitCellChange('${student.id}', 'rollNo', this.value)" oninput="evaluateHighlight(this)"></td>
+                    <td class="${nameClass}"><input type="text" placeholder="Enter Name" style="text-align: left;" value="${student.name || ''}" onblur="commitCellChange('${student.id}', 'name', this.value)" oninput="evaluateHighlight(this)"></td>
                 `;
 
-                // Render Subject Inputs
                 ActiveConfigStructure.subjects.forEach(sub => {
                     let markVal = student[sub] !== undefined ? student[sub] : '';
                     let subClass = (markVal === '') ? 'missing-mark' : '';
                     let inpType = (sub.toLowerCase() === 'art') ? 'text' : 'number';
                     
-                    rowHtml += `<td class="${subClass}"><input type="${inpType}" value="${markVal}" oninput="evaluateHighlight(this); validateMaxConstraint(this, '${sub}')" onblur="commitCellChange('${student.id}', '${sub}', this.value)"></td>`;
+                    rowHtml += `<td class="${subClass}"><input type="${inpType}" placeholder="-" value="${markVal}" oninput="evaluateHighlight(this); validateMaxConstraint(this, '${sub}')" onblur="commitCellChange('${student.id}', '${sub}', this.value)"></td>`;
                 });
 
-                // Render Calculated Metrics at the end
                 const academicSubjects = ActiveConfigStructure.subjects.filter(s => s.toLowerCase() !== 'art').length;
                 const grandTotal = academicSubjects * ActiveConfigStructure.max;
                 const percentage = grandTotal > 0 ? ((student.calculatedTotal / grandTotal) * 100).toFixed(1) + '%' : '0.0%';
 
                 rowHtml += `
-                    <td class="bg-slate-50 font-bold">${student.calculatedTotal}</td>
-                    <td class="bg-slate-50 font-bold">${percentage}</td>
-                    <td class="bg-amber-50 font-black text-amber-700">${index + 1}</td>
+                    <td class="bg-indigo-50 font-bold text-indigo-900 border-indigo-200">${student.calculatedTotal}</td>
+                    <td class="bg-indigo-50 font-bold text-indigo-900 border-indigo-200">${percentage}</td>
+                    <td class="bg-amber-50 font-black text-amber-700 border-amber-200">${student.calculatedTotal > 0 ? index + 1 : '-'}</td>
                 `;
 
                 if(ActiveUserRole === 'admin') {
-                    rowHtml += `<td><button class="text-rose-600 font-bold text-xs" onclick="purgeRecord('${student.id}')">Delete</button></td>`;
+                    rowHtml += `<td><button class="text-rose-600 font-bold text-xs bg-rose-50 px-2 py-1 rounded border border-rose-200 hover:bg-rose-100" onclick="purgeRecord('${student.id}')">Delete</button></td>`;
                 }
 
                 tr.innerHTML = rowHtml;
@@ -327,14 +336,18 @@
         }
 
         function commitCellChange(id, field, val) {
-            database.ref(`${DatabaseReferencePath}/${id}/${field}`).set(val);
+            database.ref(`${DatabaseReferencePath}/${id}/${field}`).set(val).catch(e => alert("Save failed! Network issue."));
         }
 
         function addNewStudentRow() {
-            const rowRef = database.ref(DatabaseReferencePath).push();
-            let payload = { rollNo: "", name: "" };
-            ActiveConfigStructure.subjects.forEach(sub => { payload[sub] = ""; });
-            rowRef.set(payload);
+            try {
+                const rowRef = database.ref(DatabaseReferencePath).push();
+                let payload = { rollNo: "", name: "" };
+                ActiveConfigStructure.subjects.forEach(sub => { payload[sub] = ""; });
+                rowRef.set(payload).catch(e => alert("Could not create row! Check Firebase Rules (must be true)"));
+            } catch(error) {
+                alert("System error. Refresh the page.");
+            }
         }
 
         function purgeRecord(id) {
