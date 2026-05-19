@@ -2,36 +2,119 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ravenwood Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ravenwood Premium Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <style>
+        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; }
+        th { background: #1e293b; color: white; padding: 12px; text-transform: uppercase; font-size: 11px; }
+        td { border: 1px solid #e2e8f0; padding: 4px; text-align: center; background: white; }
+        input { width: 100%; text-align: center; padding: 8px; font-weight: 600; }
+        input:focus { outline: 2px solid #6366f1; }
+    </style>
 </head>
-<body>
+<body class="bg-slate-100 min-h-screen">
 
-<script>
-    // Tumhara original config wahi hai jo file mein tha
-    const firebaseConfig = {
-        apiKey: "AIzaSyB5RV8tLsLZD6h1tsm_PxWnxrRZyylQY3k",
-        authDomain: "ravenwood-exam-portal.firebaseapp.com",
-        databaseURL: "https://ravenwood-exam-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "ravenwood-exam-portal",
-        storageBucket: "ravenwood-exam-portal.firebasestorage.app",
-        messagingSenderId: "737654590264",
-        appId: "1:737654590264:web:00b64a74917a93cd1b4fcd"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    <div id="login-section" class="p-8 flex justify-center">
+        <div class="bg-white p-6 rounded-xl shadow border w-full max-w-sm">
+            <h2 class="text-lg font-bold mb-4">Login</h2>
+            <select id="class-select" class="w-full border p-2 mb-3 rounded" onchange="updateSections()"><option value="">-- Class --</option></select>
+            <select id="section-select" class="w-full border p-2 mb-3 rounded"><option value="">-- Section --</option></select>
+            <button onclick="enter()" class="w-full bg-indigo-600 text-white py-2 rounded font-bold">Open Workspace</button>
+        </div>
+    </div>
 
-    // Maine sirf Class V ke subjects update kiye hain, baki sab waisa hi hai
-    const academicStructure = {
-        "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"] },
-        "V": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"] }
-        // ... baki classes waisi hi hain
-    };
+    <div id="dashboard-section" class="hidden p-4 w-full">
+        <div class="bg-slate-900 text-white p-4 rounded-xl flex justify-between">
+            <h2 id="current-view-title" class="font-bold">Workspace Ready</h2>
+        </div>
+        <div class="table-container mt-4">
+            <table id="marks-entry-table">
+                <thead id="table-head-row"></thead>
+                <tbody id="table-body-rows"></tbody>
+            </table>
+        </div>
+    </div>
 
-    // Tumhare code ka DatabaseReferencePath variable wahi rakha hai
-    // Check karo ki login ke baad DatabaseReferencePath sahi se update ho raha hai ya nahi
-</script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5RV8tLsLZD6h1tsm_PxWnxrRZyylQY3k",
+            authDomain: "ravenwood-exam-portal.firebaseapp.com",
+            databaseURL: "https://ravenwood-exam-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ravenwood-exam-portal",
+            storageBucket: "ravenwood-exam-portal.firebasestorage.app",
+            messagingSenderId: "737654590264",
+            appId: "1:737654590264:web:00b64a74917a93cd1b4fcd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Tumhara original structure (Class V added)
+        const academicStructure = {
+            "I": { subjects: ["English", "Hindi", "Maths", "Art"], sections: ["DAFFODILS"] },
+            "V": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], sections: ["MT. ALPS", "MT. BLANC"] },
+            "X": { subjects: ["English", "Hindi", "Maths", "Science", "SST", "ICT", "Art"], sections: ["WORDSWORTH"] }
+        };
+
+        // Populate Dropdowns
+        const clsSelect = document.getElementById('class-select');
+        Object.keys(academicStructure).forEach(c => clsSelect.innerHTML += `<option value="${c}">Class ${c}</option>`);
+
+        function updateSections() {
+            const secSelect = document.getElementById('section-select');
+            secSelect.innerHTML = '<option value="">-- Section --</option>';
+            academicStructure[clsSelect.value].sections.forEach(s => secSelect.innerHTML += `<option value="${s}">${s}</option>`);
+        }
+
+        function enter() {
+            const cls = clsSelect.value;
+            const sec = document.getElementById('section-select').value;
+            if(!cls || !sec) return alert("Select Class/Section");
+            
+            const DatabaseReferencePath = `student_records/${cls}/${sec}`;
+            const ActiveConfigStructure = academicStructure[cls];
+            
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            
+            // Generate Header
+            const thead = document.getElementById('table-head-row');
+            thead.innerHTML = `<tr><th>Roll No</th><th>Name</th>${ActiveConfigStructure.subjects.map(s => `<th>${s}</th>`).join('')}<th>Total</th></tr>`;
+            
+            database.ref(DatabaseReferencePath).on('value', snap => {
+                const tbody = document.getElementById('table-body-rows');
+                tbody.innerHTML = '';
+                let data = snap.val() || {};
+                let list = Object.keys(data).map(id => ({id, ...data[id]}));
+                list.sort((a,b) => (Number(a.rollNo)||0) - (Number(b.rollNo)||0));
+                
+                list.forEach(s => {
+                    let total = ActiveConfigStructure.subjects.reduce((a, sub) => sub !== 'Art' ? a + (Number(s[sub])||0) : a, 0);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><input type="number" value="${s.rollNo||''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/rollNo').set(this.value)"></td>
+                                    <td><input type="text" value="${s.name||''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/name').set(this.value)"></td>
+                                    ${ActiveConfigStructure.subjects.map(sub => `<td><input type="text" value="${s[sub]||''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`).join('')}
+                                    <td class="font-bold bg-slate-200">${total}</td>`;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        // Keyboard Nav
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') {
+                const inputs = Array.from(document.querySelectorAll('input'));
+                const i = inputs.indexOf(e.target);
+                const cols = document.querySelector('thead tr').children.length - 2; 
+                if (['ArrowDown', 'Enter'].includes(e.key)) { e.preventDefault(); if(inputs[i+cols]) inputs[i+cols].focus(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); if(inputs[i-cols]) inputs[i-cols].focus(); }
+                else if (e.key === 'ArrowRight' && inputs[i+1]) inputs[i+1].focus();
+                else if (e.key === 'ArrowLeft' && inputs[i-1]) inputs[i-1].focus();
+            }
+        });
+    </script>
 </body>
 </html>
