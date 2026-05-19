@@ -28,7 +28,6 @@
         input:focus { outline: 2px solid #6366f1; background: #fff; border-radius: 6px; }
         .admin-tab-btn.active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 700; }
 
-        /* Auto-uppercase for Art Grades */
         .grade-input { text-transform: uppercase; }
 
         .ticker-wrap {
@@ -206,7 +205,6 @@
     </main>
 
     <script>
-        // 1. FIREBASE SETUP
         const firebaseConfig = {
             apiKey: "AIzaSyB5RV8tLsLZD6h1tsm_PxWnxrRZyylQY3k",
             authDomain: "ravenwood-exam-portal.firebaseapp.com",
@@ -219,7 +217,6 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 2. DEFAULT STRUCTURE
         const defaultAcademicStructure = {
             "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
             "II": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["EARTH", "JUPITER", "MARS", "NEPTUNE", "VENUS"] },
@@ -243,7 +240,6 @@
         let globalExcelHeading = "PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)";
         let globalTickerText = "🔥 PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May) has been declared! 🔥";
 
-        // Connection Status
         database.ref(".info/connected").on("value", (snap) => {
             const statusEl = document.getElementById('connection-status');
             if (snap.val() === true) {
@@ -255,14 +251,12 @@
             }
         });
 
-        // Config Listener (Bug Fixed: Admin can now delete default classes without auto-recovery)
         database.ref('portal_config').on('value', (snap) => {
             let conf = snap.val();
             
             if(conf && conf.academicStructure) {
                 dynamicAcademicStructure = conf.academicStructure;
             } else {
-                // First time setup only
                 database.ref('portal_config/academicStructure').set(defaultAcademicStructure);
                 dynamicAcademicStructure = defaultAcademicStructure;
             }
@@ -293,7 +287,7 @@
                 reader.onload = function(e) {
                     database.ref('portal_config/logoBase64').set(e.target.result).then(() => {
                         alert("✅ School Logo Successfully Uploaded!");
-                    }).catch(() => alert("❌ Image is too large. Please use a smaller size image."));
+                    }).catch(() => alert("❌ Image file size is too big! Please compress the image."));
                 };
                 reader.readAsDataURL(file);
             }
@@ -427,7 +421,7 @@
         }
 
         function deleteClassStructure(cls) {
-            if(confirm(`⚠️ WARNING: Delete Class ${cls}? This will permanently remove its structure.`)) {
+            if(confirm(`⚠️ WARNING: Delete Class ${cls}?`)) {
                 delete dynamicAcademicStructure[cls];
                 database.ref('portal_config/academicStructure').set(dynamicAcademicStructure);
             }
@@ -502,7 +496,7 @@
             
             let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
             
-            // Bug Fix: Handling NaN by falling back to 0 if text is entered
+            // 1. Calculate Totals
             studentsList.forEach(student => {
                 let sum = 0;
                 ActiveConfigStructure.subjects.forEach(sub => {
@@ -512,8 +506,22 @@
                 });
                 student.calculatedTotal = sum;
             });
-            studentsList.sort((a, b) => b.calculatedTotal - a.calculatedTotal);
 
+            // 2. Determine Rank Map (Background calculation, without reordering the screen yet)
+            let rankedList = [...studentsList].sort((a, b) => b.calculatedTotal - a.calculatedTotal);
+            let rankMap = {};
+            rankedList.forEach((student, i) => {
+                rankMap[student.id] = student.calculatedTotal > 0 ? i + 1 : '-';
+            });
+
+            // 3. 🚨 THE FIX: Sort Display List strictly by Roll Number so rows NEVER jump around
+            studentsList.sort((a, b) => {
+                let rollA = parseInt(a.rollNo) || 999999; // Empty rolls stay at bottom
+                let rollB = parseInt(b.rollNo) || 999999;
+                return rollA - rollB;
+            });
+
+            // 4. Render the Table
             studentsList.forEach((student, index) => {
                 const tr = document.createElement('tr');
                 let rowHtml = `
@@ -524,22 +532,24 @@
                 ActiveConfigStructure.subjects.forEach(sub => {
                     let isArt = sub.toLowerCase() === 'art';
                     let markVal = student[sub] !== undefined ? student[sub] : '';
-                    let inpType = isArt ? 'text' : 'text'; // Art uses text, but CSS makes it uppercase
+                    let inpType = isArt ? 'text' : 'text'; 
                     let extraClass = isArt ? 'grade-input' : '';
                     
                     let extraLogic = isArt ? '' : `validateMaxConstraint(this, '${sub}');`;
                     
-                    // Bug Fix: Art grade auto-capitalize now handled gracefully via CSS and JS on blur
                     rowHtml += `<td class="${markVal==='' ? 'missing-mark':''}"><input type="${inpType}" class="${extraClass}" value="${markVal}" oninput="evaluateHighlight(this); ${extraLogic}" onblur="commitCellChange('${student.id}', '${sub}', this.value${isArt ? '.toUpperCase()' : ''})"></td>`;
                 });
 
                 const max = ActiveConfigStructure.subjects.filter(s => s.toLowerCase() !== 'art').length * ActiveConfigStructure.max;
                 const perc = max > 0 ? ((student.calculatedTotal / max) * 100).toFixed(1) + '%' : '0%';
+                
+                // Get pre-calculated rank
+                let finalRank = rankMap[student.id];
 
                 rowHtml += `
                     <td class="font-bold text-indigo-900 bg-indigo-50">${student.calculatedTotal}</td>
                     <td class="font-semibold text-indigo-900 bg-indigo-50">${perc}</td>
-                    <td class="font-black text-amber-700 bg-amber-50">${student.calculatedTotal > 0 ? index + 1 : '-'}</td>
+                    <td class="font-black text-amber-700 bg-amber-50">${finalRank}</td>
                 `;
 
                 if(ActiveUserRole === 'admin') {
@@ -571,7 +581,6 @@
         
         function purgeRecord(id) { if(confirm("Delete permanently?")) database.ref(`${DatabaseReferencePath}/${id}`).remove(); }
 
-        // EXCEL EXPORT ENGINE
         async function exportProfessionalExcel() {
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet(`Class ${SelectedClassKey}-${SelectedSectionKey}`);
@@ -623,41 +632,4 @@
             
             headerRow.eachCell((cell, colNumber) => {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
-                cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 12 };
-                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-                cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-            });
-
-            const rows = Array.from(table.querySelectorAll("tbody tr"));
-            let currentRowNum = 6;
-
-            rows.forEach(row => {
-                const rowData = [];
-                row.querySelectorAll("input").forEach(inp => rowData.push(inp.value.toUpperCase())); // Apply Uppercase to Excel for grades
-                const tds = row.querySelectorAll("td");
-                let offset = (ActiveUserRole === 'admin') ? 1 : 0;
-                rowData.push(tds[tds.length - 3 - offset].innerText); 
-                rowData.push(tds[tds.length - 2 - offset].innerText); 
-                rowData.push(tds[tds.length - 1 - offset].innerText); 
-
-                const dataRow = sheet.getRow(currentRowNum);
-                dataRow.values = rowData;
-                
-                dataRow.eachCell((cell, colNum) => {
-                    cell.alignment = { vertical: 'middle', horizontal: colNum === 2 ? 'left' : 'center' };
-                    cell.border = { top: {style:'thin', color: {argb:'FFE2E8F0'}}, left: {style:'thin', color: {argb:'FFE2E8F0'}}, bottom: {style:'thin', color: {argb:'FFE2E8F0'}}, right: {style:'thin', color: {argb:'FFE2E8F0'}} };
-                    
-                    if (colNum >= totalCols - 2) {
-                        cell.font = { bold: true, color: { argb: 'FF1E3A8A' } };
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0Fdf4' } }; 
-                    }
-                });
-                currentRowNum++;
-            });
-
-            const buffer = await workbook.xlsx.writeBuffer();
-            saveAs(new Blob([buffer]), `Class_${SelectedClassKey}_${SelectedSectionKey}_Designed_Report.xlsx`);
-        }
-    </script>
-</body>
-</html>
+                cell.font = { color: { argb: 'FFFFFFFF' },
