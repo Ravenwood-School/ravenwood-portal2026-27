@@ -3,27 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ravenwood Premium Portal</title>
+    <title>Ravenwood Results Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        body { font-family: 'Inter', sans-serif; }
+        .missing-mark { background-color: #fef2f2 !important; border: 2px solid #ef4444 !important; }
         .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; }
-        th { background: #1e293b; color: white; padding: 12px; text-transform: uppercase; font-size: 11px; }
+        th { background: #1e293b; color: white; padding: 12px; text-transform: uppercase; font-size: 11px; white-space: nowrap; }
         td { border: 1px solid #e2e8f0; padding: 4px; text-align: center; background: white; }
-        input { width: 100%; min-width: 60px; text-align: center; padding: 8px; font-weight: 600; color: #334155; }
-        input:focus { outline: 2px solid #6366f1; }
+        input { width: 100%; min-width: 60px; text-align: center; padding: 8px; font-weight: 600; color: #334155; background: transparent; border: none; }
+        input:focus { outline: 2px solid #6366f1; background: #fff; border-radius: 4px; }
+        .ticker-wrap { width: 100%; overflow: hidden; background-color: #fef9c3; border-top: 1px solid #fde047; padding: 6px 0; display: flex; align-items: center; }
+        .ticker { display: inline-block; white-space: nowrap; animation: marquee 25s linear infinite; font-weight: 700; color: #b45309; font-size: 14px; text-transform: uppercase; }
+        @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-slate-100 min-h-screen flex flex-col">
 
-    <div id="dashboard-section" class="p-4 w-full">
-        <div class="bg-slate-900 text-white p-4 rounded-xl flex justify-between items-center">
-            <h2 id="current-view-title" class="font-bold">Loading Workspace...</h2>
-            <button onclick="exportProfessionalExcel()" class="bg-emerald-500 px-4 py-1 rounded text-xs font-bold">Export Excel</button>
+    <header class="bg-slate-900 text-white p-4 shadow-xl flex justify-between items-center px-6">
+        <div class="flex items-center gap-3">
+            <img id="display-logo" src="https://via.placeholder.com/120" alt="Logo" class="h-10 w-10 rounded object-contain bg-white p-1">
+            <h1 class="text-lg font-bold">RAVENWOOD INT. SCHOOL</h1>
+        </div>
+        <button id="logout-btn" class="hidden bg-rose-600 px-4 py-1.5 rounded-lg text-xs font-bold" onclick="logout()">Exit</button>
+    </header>
+
+    <main id="login-section" class="flex-grow flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm border">
+            <h2 class="text-xl font-bold mb-4">Portal Login</h2>
+            <select id="role-select" class="w-full border p-2 mb-4 rounded" onchange="toggleLoginFields()">
+                <option value="teacher">Teacher Entry</option>
+                <option value="admin">Administrator</option>
+            </select>
+            <div id="teacher-fields" class="space-y-3">
+                <select id="class-select" class="w-full border p-2 rounded" onchange="updateSectionsDropdown()"><option value="">-- Class --</option></select>
+                <select id="section-select" class="w-full border p-2 rounded"><option value="">-- Section --</option></select>
+            </div>
+            <input type="password" id="admin-pass" placeholder="Admin Password" class="hidden w-full border p-2 mb-4 rounded">
+            <button onclick="login()" class="w-full bg-indigo-600 text-white py-2 rounded mt-4 font-bold">Initialize</button>
+        </div>
+    </main>
+
+    <main id="dashboard-section" class="hidden p-4 w-full">
+        <div class="ticker-wrap hidden" id="ticker-container"><div class="ticker" id="live-ticker-text"></div></div>
+        <div class="bg-slate-900 text-white p-4 rounded-xl flex justify-between items-center mt-2">
+            <h2 id="current-view-title" class="font-bold">Workspace</h2>
+            <div class="flex gap-2">
+                <button onclick="addNewStudentRow()" class="bg-indigo-600 px-3 py-1 rounded text-xs font-bold">+ Add Row</button>
+                <button onclick="exportProfessionalExcel()" class="bg-emerald-500 px-3 py-1 rounded text-xs font-bold">📥 Export</button>
+            </div>
         </div>
         <div class="table-container mt-4">
             <table id="marks-entry-table">
@@ -31,7 +65,7 @@
                 <tbody id="table-body-rows"></tbody>
             </table>
         </div>
-    </div>
+    </main>
 
     <script>
         const firebaseConfig = {
@@ -43,23 +77,87 @@
             messagingSenderId: "737654590264",
             appId: "1:737654590264:web:00b64a74917a93cd1b4fcd"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        
-        // Configuration: Define path carefully
-        let ActiveConfigStructure = { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20 };
-        let DatabaseReferencePath = "student_records/X/WORDSWORTH"; 
 
-        // SAFETY: Only run after document is fully ready
-        document.addEventListener('DOMContentLoaded', () => {
+        // FULL STRUCTURE (Class I-X)
+        const academicStructure = {
+            "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
+            "II": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["EARTH", "JUPITER", "MARS", "NEPTUNE", "VENUS"] },
+            "III": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["AMAZON", "BEAS", "INDUS", "NILE", "THAMES"] },
+            "IV": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["ARCTIC", "ATLANTIC", "PACIFIC"] },
+            "V": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["MT. ALPS", "MT. BLANC", "MT. ELBERT", "MT. EVEREST"] },
+            "VI": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["DARWIN", "EINSTEIN", "NEWTON"] },
+            "VII": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["DIAMOND", "EMERALD", "PEARL"] },
+            "VIII": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["FLAMINGO", "HORNBILL", "JAY"] },
+            "IX": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["LEONARDO", "PICASSO", "SALVADOR"] },
+            "X": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 40, sections: ["WORDSWORTH"] }
+        };
+
+        let ActiveConfigStructure = null, DatabaseReferencePath = "", SelectedClassKey = "", SelectedSectionKey = "";
+
+        // UI Initialization
+        document.addEventListener("DOMContentLoaded", () => {
+            const classDropdown = document.getElementById('class-select');
+            Object.keys(academicStructure).forEach(cls => {
+                let opt = document.createElement('option');
+                opt.value = cls; opt.innerText = `Class ${cls}`;
+                classDropdown.appendChild(opt);
+            });
+        });
+
+        function updateSectionsDropdown() {
+            const cls = document.getElementById('class-select').value;
+            const secDropdown = document.getElementById('section-select');
+            secDropdown.innerHTML = '<option value="">-- Section --</option>';
+            if(cls && academicStructure[cls]) {
+                academicStructure[cls].sections.forEach(sec => {
+                    let opt = document.createElement('option');
+                    opt.value = sec; opt.innerText = sec;
+                    secDropdown.appendChild(opt);
+                });
+            }
+        }
+
+        function toggleLoginFields() {
+            const role = document.getElementById('role-select').value;
+            document.getElementById('teacher-fields').classList.toggle('hidden', role === 'admin');
+            document.getElementById('admin-fields').classList.toggle('hidden', role === 'teacher');
+        }
+
+        function login() {
+            const role = document.getElementById('role-select').value;
+            if(role === 'admin' && document.getElementById('admin-pass').value !== '1234') { alert('Invalid Password'); return; }
+            
+            const cls = document.getElementById('class-select').value || "I";
+            const sec = document.getElementById('section-select').value || academicStructure["I"].sections[0];
+            
+            if(!cls || !sec) { alert('Select Class/Section'); return; }
+            
+            InitializeWorkspace(cls, sec);
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('logout-btn').classList.remove('hidden');
+        }
+
+        function logout() { location.reload(); }
+
+        function InitializeWorkspace(cls, sec) {
+            SelectedClassKey = cls; SelectedSectionKey = sec;
+            ActiveConfigStructure = academicStructure[cls];
+            DatabaseReferencePath = `student_records/${cls}/${sec}`;
+            document.getElementById('current-view-title').innerText = `Workspace: ${cls} - ${sec}`;
+            
+            // Set Ticker
+            document.getElementById('ticker-container').classList.remove('hidden');
+            document.getElementById('live-ticker-text').innerHTML = `Results for ${cls}-${sec} | Session 2026-27`;
+            
             GenerateTableHeaders();
             SyncCloudDataLive();
-        });
+        }
 
         function GenerateTableHeaders() {
             const thead = document.getElementById('table-head-row');
-            if(!thead) return;
             let html = `<tr><th>Roll No</th><th>Name</th>`;
             ActiveConfigStructure.subjects.forEach(sub => html += `<th>${sub}</th>`);
             html += `<th>Total</th><th>Rank</th></tr>`;
@@ -67,36 +165,67 @@
         }
 
         function SyncCloudDataLive() {
-            database.ref(DatabaseReferencePath).on('value', (snap) => {
-                const records = snap.val() || {};
-                const tbody = document.getElementById('table-body-rows');
-                if(!tbody) return;
-                tbody.innerHTML = '';
+            database.ref(DatabaseReferencePath).on('value', (snap) => RenderDataMatrix(snap.val() || {}));
+        }
+
+        function RenderDataMatrix(records) {
+            const tbody = document.getElementById('table-body-rows');
+            tbody.innerHTML = '';
+            let list = Object.keys(records).map(id => ({ id, ...records[id] }));
+            
+            // Calculate
+            list.forEach(s => s.total = ActiveConfigStructure.subjects.reduce((a, sub) => sub !== 'Art' ? a + (Number(s[sub]) || 0) : a, 0));
+            // Rank
+            let ranked = [...list].sort((a,b) => b.total - a.total);
+            // Sort by Roll
+            list.sort((a,b) => (Number(a.rollNo)||0) - (Number(b.rollNo)||0));
+
+            list.forEach(s => {
+                const tr = document.createElement('tr');
+                let rank = ranked.findIndex(r => r.id === s.id) + 1;
                 
-                let list = Object.keys(records).map(id => ({ id, ...records[id] }));
-                list.sort((a,b) => (Number(a.rollNo)||0) - (Number(b.rollNo)||0));
-                
-                list.forEach(s => {
-                    let sum = ActiveConfigStructure.subjects.reduce((acc, sub) => sub !== 'Art' ? acc + (Number(s[sub]) || 0) : acc, 0);
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td><input type="number" value="${s.rollNo || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/rollNo').set(this.value)"></td>
-                                    <td><input type="text" value="${s.name || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/name').set(this.value)"></td>
-                                    ${ActiveConfigStructure.subjects.map(sub => `<td><input type="text" value="${s[sub] || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`).join('')}
-                                    <td class="font-bold">${sum}</td><td>-</td>`;
-                    tbody.appendChild(tr);
+                let html = `<td><input type="number" value="${s.rollNo || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/rollNo').set(this.value)"></td>
+                            <td><input type="text" value="${s.name || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/name').set(this.value)"></td>`;
+                ActiveConfigStructure.subjects.forEach(sub => {
+                    html += `<td><input type="text" value="${s[sub] || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`;
                 });
+                html += `<td class="font-bold bg-slate-200">${s.total}</td><td class="font-bold bg-amber-100">${rank}</td>`;
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
             });
         }
-        
-        // Keyboard Navigation
+
+        function addNewStudentRow() { database.ref(DatabaseReferencePath).push().set({rollNo:"", name:""}); }
+
+        // Keyboard Nav
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') {
                 const inputs = Array.from(document.querySelectorAll('input'));
                 const index = inputs.indexOf(e.target);
-                if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); if (inputs[index + 10]) inputs[index + 10].focus(); }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); if (inputs[index - 10]) inputs[index - 10].focus(); }
+                if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); if (inputs[index + (ActiveConfigStructure.subjects.length + 2)]) inputs[index + (ActiveConfigStructure.subjects.length + 2)].focus(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); if (inputs[index - (ActiveConfigStructure.subjects.length + 2)]) inputs[index - (ActiveConfigStructure.subjects.length + 2)].focus(); }
+                else if (e.key === 'ArrowRight' && index < inputs.length-1) inputs[index+1].focus();
+                else if (e.key === 'ArrowLeft' && index > 0) inputs[index-1].focus();
             }
         });
+
+        // Excel Export
+        async function exportProfessionalExcel() {
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet("Result");
+            sheet.columns = [{header: 'Roll', key: 'roll'}, {header: 'Name', key: 'name'}];
+            ActiveConfigStructure.subjects.forEach(s => sheet.columns.push({header: s, key: s}));
+            
+            const rows = Array.from(document.querySelectorAll('#marks-entry-table tbody tr'));
+            rows.forEach(row => {
+                const inputs = Array.from(row.querySelectorAll('input'));
+                let data = { roll: inputs[0].value, name: inputs[1].value };
+                ActiveConfigStructure.subjects.forEach((s, i) => data[s] = inputs[i+2].value);
+                sheet.addRow(data);
+            });
+            const buffer = await workbook.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), `Result.xlsx`);
+        }
     </script>
 </body>
 </html>
