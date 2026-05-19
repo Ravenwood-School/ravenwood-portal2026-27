@@ -18,22 +18,23 @@
         body { font-family: 'Inter', sans-serif; }
         .missing-mark { background-color: #fef2f2 !important; border: 2px solid #ef4444 !important; }
         
-        /* Mobile Scroll Optimization for Table */
         .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; /* Forces scroll on mobile */ }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; }
         
         th { background-color: #1e293b; color: #f8fafc; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; padding: 12px 8px; border: 1px solid #334155; white-space: nowrap; }
         td { border: 1px solid #e2e8f0; padding: 6px 4px; text-align: center; font-size: 14px; background-color: #fff; }
         tr:hover td { background-color: #f8fafc; }
-        input { width: 100%; min-width: 60px; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 500; color: #334155; }
+        input { width: 100%; min-width: 60px; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 600; color: #334155; }
         input:focus { outline: 2px solid #6366f1; background: #fff; border-radius: 6px; }
         .admin-tab-btn.active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 700; }
 
-        /* News Ticker Animation CSS */
+        /* Auto-uppercase for Art Grades */
+        .grade-input { text-transform: uppercase; }
+
         .ticker-wrap {
             width: 100%;
             overflow: hidden;
-            background-color: #fef9c3; /* Light Yellow */
+            background-color: #fef9c3; 
             border-top: 1px solid #fde047;
             border-bottom: 1px solid #fde047;
             padding: 6px 0;
@@ -45,7 +46,7 @@
             white-space: nowrap;
             animation: marquee 25s linear infinite;
             font-weight: 700;
-            color: #b45309; /* Dark Amber */
+            color: #b45309; 
             font-size: 14px;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -134,14 +135,14 @@
             <div id="admin-tab-structure-view" class="hidden p-4 md:p-6 space-y-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="border border-slate-200 p-4 md:p-5 rounded-2xl bg-slate-50/50 space-y-3">
-                        <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide border-b pb-2">Add New Class</h4>
+                        <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide border-b pb-2">Add / Update Class</h4>
                         <div class="grid grid-cols-2 gap-3">
                             <input type="text" id="new-class-name" placeholder="Class Name (e.g. XI)" class="bg-white border p-2 rounded-xl text-left font-semibold">
-                            <input type="number" id="new-class-max" placeholder="Max Marks" class="bg-white border p-2 rounded-xl text-left font-semibold">
+                            <input type="number" id="new-class-max" placeholder="Max Marks (e.g. 40)" class="bg-white border p-2 rounded-xl text-left font-semibold">
                         </div>
-                        <input type="text" id="new-class-subjects" placeholder="Subjects (Comma separated)" class="w-full bg-white border p-2 rounded-xl text-left text-xs">
-                        <input type="text" id="new-class-sections" placeholder="Sections (Comma separated)" class="w-full bg-white border p-2 rounded-xl text-left text-xs">
-                        <button class="bg-slate-900 text-white w-full py-2.5 rounded-xl font-bold text-xs uppercase" onclick="saveNewClassStructure()">Save Class</button>
+                        <input type="text" id="new-class-subjects" placeholder="Subjects (Jaise: English, Maths, Art)" class="w-full bg-white border p-2 rounded-xl text-left text-xs">
+                        <input type="text" id="new-class-sections" placeholder="Sections (Jaise: A, B, C)" class="w-full bg-white border p-2 rounded-xl text-left text-xs">
+                        <button class="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-md transition-all" onclick="saveNewClassStructure()">✅ Save Class</button>
                     </div>
                     <div class="border border-slate-200 p-4 md:p-5 rounded-2xl bg-slate-50/50 space-y-2">
                         <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wide border-b pb-2">Active Classes</h4>
@@ -163,7 +164,6 @@
                             <label class="text-xs font-bold text-slate-800 uppercase block">Excel Print Heading Text:</label>
                             <input type="text" id="excel-heading-input" value="PT 1 Exam Result of Class _________ for Academic Session 2026-27" class="w-full border border-slate-300 p-2.5 rounded-xl text-sm bg-white font-medium" onblur="saveAdminConfig('excelHeading', this.value)">
                         </div>
-                        
                         <div class="border border-slate-200 p-4 rounded-2xl bg-slate-50/50 space-y-2">
                             <label class="text-xs font-bold text-amber-700 uppercase block">Moving Headline Ticker Text (News Style):</label>
                             <input type="text" id="ticker-heading-input" value="🔥 PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May) has been declared! 🔥" class="w-full border border-amber-300 p-2.5 rounded-xl text-sm bg-white font-medium focus:ring-amber-500 focus:border-amber-500" onblur="saveAdminConfig('tickerText', this.value)">
@@ -175,10 +175,8 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden w-full">
-            
             <div class="ticker-wrap hidden" id="ticker-container">
-                <div class="ticker" id="live-ticker-text">
-                    </div>
+                <div class="ticker" id="live-ticker-text"></div>
             </div>
 
             <div class="bg-slate-900 px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-800">
@@ -208,7 +206,7 @@
     </main>
 
     <script>
-        // FIREBASE SETUP
+        // 1. FIREBASE SETUP
         const firebaseConfig = {
             apiKey: "AIzaSyB5RV8tLsLZD6h1tsm_PxWnxrRZyylQY3k",
             authDomain: "ravenwood-exam-portal.firebaseapp.com",
@@ -221,6 +219,20 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // 2. DEFAULT STRUCTURE
+        const defaultAcademicStructure = {
+            "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
+            "II": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["EARTH", "JUPITER", "MARS", "NEPTUNE", "VENUS"] },
+            "III": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["AMAZON", "BEAS", "INDUS", "NILE", "THAMES"] },
+            "IV": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["ARCTIC", "ATLANTIC", "PACIFIC"] },
+            "V": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["MT. ALPS", "MT. BLANC", "MT. ELBERT", "MT. EVEREST"] },
+            "VI": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["DARWIN", "EINSTEIN", "NEWTON"] },
+            "VII": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["DIAMOND", "EMERALD", "PEARL"] },
+            "VIII": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["FLAMINGO", "HORNBILL", "JAY"] },
+            "IX": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["LEONARDO", "PICASSO", "SALVADOR"] },
+            "X": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 40, sections: ["WORDSWORTH"] }
+        };
+
         let dynamicAcademicStructure = {};
         let ActiveUserRole = "teacher";
         let SelectedClassKey = "";
@@ -228,8 +240,6 @@
         let DatabaseReferencePath = "";
         let ActiveConfigStructure = null;
         let globalSchoolLogoBase64 = null; 
-        
-        // Ticker and Heading Global Variables
         let globalExcelHeading = "PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)";
         let globalTickerText = "🔥 PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May) has been declared! 🔥";
 
@@ -245,10 +255,17 @@
             }
         });
 
-        // Load Global Configs
+        // Config Listener (Bug Fixed: Admin can now delete default classes without auto-recovery)
         database.ref('portal_config').on('value', (snap) => {
             let conf = snap.val();
-            if(conf && conf.academicStructure) dynamicAcademicStructure = conf.academicStructure;
+            
+            if(conf && conf.academicStructure) {
+                dynamicAcademicStructure = conf.academicStructure;
+            } else {
+                // First time setup only
+                database.ref('portal_config/academicStructure').set(defaultAcademicStructure);
+                dynamicAcademicStructure = defaultAcademicStructure;
+            }
             
             if(conf) {
                 if(conf.excelHeading) {
@@ -266,8 +283,6 @@
             }
             populateDropdowns();
             renderActiveStructures();
-            
-            // If already loaded a class, refresh the ticker
             if(SelectedClassKey && SelectedSectionKey) updateTickerText();
         });
 
@@ -277,8 +292,8 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     database.ref('portal_config/logoBase64').set(e.target.result).then(() => {
-                        alert("Logo saved successfully!");
-                    }).catch(() => alert("Image is too large for database. Try a smaller compression."));
+                        alert("✅ School Logo Successfully Uploaded!");
+                    }).catch(() => alert("❌ Image is too large. Please use a smaller size image."));
                 };
                 reader.readAsDataURL(file);
             }
@@ -390,19 +405,29 @@
         function saveNewClassStructure() {
             const clsName = document.getElementById('new-class-name').value.trim().toUpperCase();
             const maxMarks = Number(document.getElementById('new-class-max').value);
-            const subs = document.getElementById('new-class-subjects').value.split(',').map(s => s.trim());
-            const secs = document.getElementById('new-class-sections').value.split(',').map(s => s.trim().toUpperCase());
+            const subsInput = document.getElementById('new-class-subjects').value.trim();
+            const secsInput = document.getElementById('new-class-sections').value.trim();
 
-            if(!clsName || !maxMarks || subs.length === 0 || secs.length === 0) { alert("Missing fields!"); return; }
+            if(!clsName || !maxMarks || !subsInput || !secsInput) { 
+                alert("⚠️ Please fill all fields (Class Name, Max Marks, Subjects, Sections)"); 
+                return; 
+            }
+
+            const subs = subsInput.split(',').map(s => s.trim()).filter(s => s !== "");
+            const secs = secsInput.split(',').map(s => s.trim().toUpperCase()).filter(s => s !== "");
 
             dynamicAcademicStructure[clsName] = { subjects: subs, max: maxMarks, sections: secs };
-            database.ref('portal_config/academicStructure').set(dynamicAcademicStructure);
-            document.getElementById('new-class-name').value = '';
-            document.getElementById('new-class-max').value = '';
+            database.ref('portal_config/academicStructure').set(dynamicAcademicStructure).then(() => {
+                alert(`✅ Success: Class ${clsName} has been saved!`);
+                document.getElementById('new-class-name').value = '';
+                document.getElementById('new-class-max').value = '';
+                document.getElementById('new-class-subjects').value = '';
+                document.getElementById('new-class-sections').value = '';
+            });
         }
 
         function deleteClassStructure(cls) {
-            if(confirm(`Delete Class ${cls}?`)) {
+            if(confirm(`⚠️ WARNING: Delete Class ${cls}? This will permanently remove its structure.`)) {
                 delete dynamicAcademicStructure[cls];
                 database.ref('portal_config/academicStructure').set(dynamicAcademicStructure);
             }
@@ -424,11 +449,7 @@
             const tickerContainer = document.getElementById('ticker-container');
             const tickerText = document.getElementById('live-ticker-text');
             tickerContainer.classList.remove('hidden');
-            
-            // Replace placeholder with actual class name
             const finalHeadline = globalTickerText.replace('_________', `${SelectedClassKey}-${SelectedSectionKey}`);
-            
-            // Add extra spaces to make looping look continuous
             tickerText.innerHTML = `${finalHeadline} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${finalHeadline} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${finalHeadline}`;
         }
 
@@ -437,9 +458,9 @@
             SelectedSectionKey = sec;
             ActiveConfigStructure = dynamicAcademicStructure[cls];
             DatabaseReferencePath = `student_records/${cls}/${sec}`;
-            document.getElementById('current-view-title').innerText = `Class Workspace: ${cls} - ${sec}`;
+            document.getElementById('current-view-title').innerText = `Workspace: ${cls} - ${sec}`;
             
-            updateTickerText(); // Activate Moving Headline
+            updateTickerText(); 
             GenerateTableHeaders();
             SyncCloudDataLive();
         }
@@ -450,9 +471,13 @@
             let html = `<tr>
                 <th style="min-width: 80px;">Roll No</th>
                 <th style="min-width: 200px; text-align: left;">Student Name</th>`;
+                
             ActiveConfigStructure.subjects.forEach(sub => {
-                html += `<th style="min-width: 90px;">${sub} <br><span class="text-[9px]">Max: ${ActiveConfigStructure.max}</span></th>`;
+                let isArt = sub.toLowerCase() === 'art';
+                let label = isArt ? 'Grade (A-E)' : `Max: ${ActiveConfigStructure.max}`;
+                html += `<th style="min-width: 90px;">${sub} <br><span class="text-[10px] text-slate-400 font-medium tracking-wider lowercase">${label}</span></th>`;
             });
+            
             html += `
                 <th class="bg-indigo-950 text-white" style="min-width: 80px;">Total</th>
                 <th class="bg-indigo-950 text-white" style="min-width: 80px;">%age</th>
@@ -476,10 +501,14 @@
             if(!ActiveConfigStructure) return;
             
             let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
+            
+            // Bug Fix: Handling NaN by falling back to 0 if text is entered
             studentsList.forEach(student => {
                 let sum = 0;
                 ActiveConfigStructure.subjects.forEach(sub => {
-                    if(sub.toLowerCase() !== 'art' && student[sub]) sum += Number(student[sub]);
+                    if(sub.toLowerCase() !== 'art' && student[sub]) {
+                        sum += (Number(student[sub]) || 0); 
+                    }
                 });
                 student.calculatedTotal = sum;
             });
@@ -493,9 +522,15 @@
                 `;
 
                 ActiveConfigStructure.subjects.forEach(sub => {
+                    let isArt = sub.toLowerCase() === 'art';
                     let markVal = student[sub] !== undefined ? student[sub] : '';
-                    let inpType = (sub.toLowerCase() === 'art') ? 'text' : 'number';
-                    rowHtml += `<td class="${markVal==='' ? 'missing-mark':''}"><input type="${inpType}" value="${markVal}" oninput="evaluateHighlight(this);" onblur="commitCellChange('${student.id}', '${sub}', this.value)"></td>`;
+                    let inpType = isArt ? 'text' : 'text'; // Art uses text, but CSS makes it uppercase
+                    let extraClass = isArt ? 'grade-input' : '';
+                    
+                    let extraLogic = isArt ? '' : `validateMaxConstraint(this, '${sub}');`;
+                    
+                    // Bug Fix: Art grade auto-capitalize now handled gracefully via CSS and JS on blur
+                    rowHtml += `<td class="${markVal==='' ? 'missing-mark':''}"><input type="${inpType}" class="${extraClass}" value="${markVal}" oninput="evaluateHighlight(this); ${extraLogic}" onblur="commitCellChange('${student.id}', '${sub}', this.value${isArt ? '.toUpperCase()' : ''})"></td>`;
                 });
 
                 const max = ActiveConfigStructure.subjects.filter(s => s.toLowerCase() !== 'art').length * ActiveConfigStructure.max;
@@ -516,13 +551,24 @@
         }
 
         function evaluateHighlight(el) { el.parentElement.classList.toggle('missing-mark', el.value.trim() === ""); }
+        
+        function validateMaxConstraint(el, sub) { 
+            let val = Number(el.value);
+            if(sub.toLowerCase() !== 'art' && val > ActiveConfigStructure.max) {
+                alert(`Limit Exceeded: Max marks for ${sub} is ${ActiveConfigStructure.max}`);
+                el.value = ActiveConfigStructure.max;
+            }
+        }
+        
         function commitCellChange(id, field, val) { database.ref(`${DatabaseReferencePath}/${id}/${field}`).set(val); }
+        
         function addNewStudentRow() {
             if(!ActiveConfigStructure) return;
             let payload = { rollNo: "", name: "" };
             ActiveConfigStructure.subjects.forEach(sub => payload[sub] = "");
             database.ref(DatabaseReferencePath).push().set(payload);
         }
+        
         function purgeRecord(id) { if(confirm("Delete permanently?")) database.ref(`${DatabaseReferencePath}/${id}`).remove(); }
 
         // EXCEL EXPORT ENGINE
@@ -587,7 +633,7 @@
 
             rows.forEach(row => {
                 const rowData = [];
-                row.querySelectorAll("input").forEach(inp => rowData.push(inp.value));
+                row.querySelectorAll("input").forEach(inp => rowData.push(inp.value.toUpperCase())); // Apply Uppercase to Excel for grades
                 const tds = row.querySelectorAll("td");
                 let offset = (ActiveUserRole === 'admin') ? 1 : 0;
                 rowData.push(tds[tds.length - 3 - offset].innerText); 
