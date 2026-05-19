@@ -205,7 +205,7 @@
     </main>
 
     <script>
-        // 1. DEFAULT STRUCTURE (Loads instantly so screen is never blank)
+        // 1. DEFAULT STRUCTURE
         const defaultAcademicStructure = {
             "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
             "II": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["EARTH", "JUPITER", "MARS", "NEPTUNE", "VENUS"] },
@@ -229,16 +229,13 @@
         let globalSchoolLogoBase64 = null; 
         let globalExcelHeading = "PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May)";
         let globalTickerText = "🔥 PT 1 Exam Result of Class _________ for Academic Session 2026-27 (May) has been declared! 🔥";
-        let database = null; // Safe global variable
+        let database = null; 
 
         // ==========================================
-        // 🚀 BULLETPROOF INSTANT UI RENDER
+        // 🚀 INSTANT UI RENDER
         // ==========================================
         populateDropdowns();
 
-        // ==========================================
-        // UI INTERACTION FUNCTIONS
-        // ==========================================
         function populateDropdowns() {
             const classDropdown = document.getElementById('class-select');
             const adminClassDropdown = document.getElementById('admin-class-select');
@@ -447,7 +444,6 @@
             
             let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
             
-            // 1. Calculate Totals
             studentsList.forEach(student => {
                 let sum = 0;
                 ActiveConfigStructure.subjects.forEach(sub => {
@@ -458,21 +454,18 @@
                 student.calculatedTotal = sum;
             });
 
-            // 2. Rank calculation
             let rankedList = [...studentsList].sort((a, b) => b.calculatedTotal - a.calculatedTotal);
             let rankMap = {};
             rankedList.forEach((student, i) => {
                 rankMap[student.id] = student.calculatedTotal > 0 ? i + 1 : '-';
             });
 
-            // 3. Fix Row Order (Sort by Roll No)
             studentsList.sort((a, b) => {
                 let rollA = parseInt(a.rollNo) || 999999; 
                 let rollB = parseInt(b.rollNo) || 999999;
                 return rollA - rollB;
             });
 
-            // 4. Render Table
             studentsList.forEach((student, index) => {
                 const tr = document.createElement('tr');
                 let rowHtml = `
@@ -550,7 +543,7 @@
         // 🛡️ ISOLATED FIREBASE INITIALIZATION 
         // ==========================================
         try {
-            const firebaseConfig = {
+            const fbConfig = {
                 apiKey: "AIzaSyB5RV8tLsLZD6h1tsm_PxWnxrRZyylQY3k",
                 authDomain: "ravenwood-exam-portal.firebaseapp.com",
                 databaseURL: "https://ravenwood-exam-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -559,7 +552,7 @@
                 messagingSenderId: "737654590264",
                 appId: "1:737654590264:web:00b64a74917a93cd1b4fcd"
             };
-            firebase.initializeApp(firebaseConfig);
+            firebase.initializeApp(fbConfig);
             database = firebase.database();
 
             // Track Connection
@@ -609,6 +602,52 @@
             document.getElementById('connection-status').className = "w-full md:w-auto text-center px-4 py-1.5 rounded-full text-xs font-bold shadow-sm bg-rose-500/10 text-rose-400 border border-rose-500/20";
             document.getElementById('connection-status').innerText = "⚠️ Network Blocked (Turn off Adblock)";
         }
+
+        // ==========================================
+        // ⌨️ EXCEL-LIKE SMART KEYBOARD NAVIGATION
+        // ==========================================
+        document.addEventListener('keydown', function(e) {
+            // Check if user is typing in a table input
+            if (e.target.tagName.toLowerCase() === 'input' && e.target.closest('#marks-entry-table')) {
+                const currentInput = e.target;
+                const td = currentInput.closest('td');
+                const tr = td.closest('tr');
+                const tbody = tr.closest('tbody');
+                
+                if (!tbody) return; // Ignore headers
+                
+                const colIndex = Array.from(tr.children).indexOf(td);
+                const rowIndex = Array.from(tbody.children).indexOf(tr);
+                
+                let targetInput = null;
+
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault(); 
+                    if (rowIndex > 0) targetInput = tbody.children[rowIndex - 1].children[colIndex]?.querySelector('input');
+                } 
+                else if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                    e.preventDefault(); 
+                    if (rowIndex < tbody.children.length - 1) targetInput = tbody.children[rowIndex + 1].children[colIndex]?.querySelector('input');
+                } 
+                else if (e.key === 'ArrowLeft') {
+                    let isAtStart = true;
+                    try { if (currentInput.type === 'text') isAtStart = currentInput.selectionStart === 0; } catch(err){}
+                    
+                    if (isAtStart) targetInput = tr.children[colIndex - 1]?.querySelector('input');
+                } 
+                else if (e.key === 'ArrowRight') {
+                    let isAtEnd = true;
+                    try { if (currentInput.type === 'text') isAtEnd = currentInput.selectionStart === currentInput.value.length; } catch(err){}
+                    
+                    if (isAtEnd) targetInput = tr.children[colIndex + 1]?.querySelector('input');
+                }
+
+                if (targetInput) {
+                    targetInput.focus();
+                    setTimeout(() => targetInput.select(), 10); // Automatically selects text for quick overwrite
+                }
+            }
+        });
 
         // ==========================================
         // EXCEL EXPORT SCRIPT
