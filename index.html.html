@@ -9,10 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .missing-mark { background-color: #fef2f2 !important; border: 2px solid #ef4444 !important; }
         .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; }
         th { background: #1e293b; color: white; padding: 12px; text-transform: uppercase; font-size: 11px; }
@@ -49,10 +46,42 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // YE TUMHARA ORIGINAL STRUCTURE HAI, BAS CLASS V KA PATH FIX KIYA HAI
+        // CLASS V FIX: Subjects list yahan define hai
         let ActiveConfigStructure = { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20 };
-        let DatabaseReferencePath = "student_records/V/MT. ALPS"; // Ye tum apni zarurat ke hisaab se change kar sakte ho
+        let DatabaseReferencePath = "student_records/V/MT. ALPS"; 
 
+        // RENDER FUNCTION (Force-Render logic)
+        function RenderDataMatrix(records) {
+            const tbody = document.getElementById('table-body-rows');
+            const thead = document.getElementById('table-head-row');
+            
+            // Header banayein
+            thead.innerHTML = `<tr><th>Roll No</th><th>Name</th>${ActiveConfigStructure.subjects.map(s => `<th>${s}</th>`).join('')}<th>Total</th><th>Rank</th></tr>`;
+            
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            
+            let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
+            studentsList.sort((a,b) => (Number(a.rollNo) || 0) - (Number(b.rollNo) || 0));
+
+            studentsList.forEach(s => {
+                let sum = ActiveConfigStructure.subjects.reduce((acc, sub) => sub !== 'Art' ? acc + (Number(s[sub]) || 0) : acc, 0);
+                const tr = document.createElement('tr');
+                
+                let html = `<td><input type="number" value="${s.rollNo || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/rollNo').set(this.value)"></td>
+                            <td><input type="text" value="${s.name || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/name').set(this.value)"></td>`;
+                
+                ActiveConfigStructure.subjects.forEach(sub => {
+                    html += `<td><input type="text" value="${s[sub] || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`;
+                });
+
+                html += `<td class="bg-slate-200 font-bold">${sum}</td><td>-</td>`;
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // KEYBOARD NAVIGATION
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') {
                 const inputs = Array.from(document.querySelectorAll('input'));
@@ -65,33 +94,10 @@
             }
         });
 
-        function RenderDataMatrix(records) {
-            const tbody = document.getElementById('table-body-rows');
-            tbody.innerHTML = '';
-            let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
-            studentsList.sort((a,b) => (Number(a.rollNo) || 0) - (Number(b.rollNo) || 0));
-
-            studentsList.forEach(s => {
-                let sum = ActiveConfigStructure.subjects.reduce((acc, sub) => sub !== 'Art' ? acc + (Number(s[sub]) || 0) : acc, 0);
-                const tr = document.createElement('tr');
-                let rank = "-"; // Rank logic can be added here
-                
-                let html = `<td><input type="number" value="${s.rollNo || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/rollNo').set(this.value)"></td>
-                            <td><input type="text" value="${s.name || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/name').set(this.value)"></td>`;
-                
-                ActiveConfigStructure.subjects.forEach(sub => {
-                    html += `<td><input type="text" class="${sub==='Art'?'grade-input':''}" value="${s[sub] || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`;
-                });
-
-                html += `<td class="bg-slate-200 font-bold">${sum}</td><td class="bg-slate-200">${rank}</td>`;
-                tr.innerHTML = html;
-                tbody.appendChild(tr);
-            });
-        }
-
+        // Data load karo
         database.ref(DatabaseReferencePath).on('value', (snap) => RenderDataMatrix(snap.val() || {}));
 
-        function exportProfessionalExcel() { /* Tumhara wahi export code */ }
+        async function exportProfessionalExcel() { /* Tumhara code */ }
     </script>
 </body>
 </html>
