@@ -3,37 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ravenwood Premium Results Portal</title>
+    <title>Ravenwood Premium Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .missing-mark { background-color: #fef2f2 !important; border: 2px solid #ef4444 !important; }
-        
-        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+        .table-container { overflow-x: auto; width: 100%; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; }
-        
-        th { background-color: #1e293b; color: #f8fafc; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; padding: 12px 8px; border: 1px solid #334155; white-space: nowrap; }
-        td { border: 1px solid #e2e8f0; padding: 6px 4px; text-align: center; font-size: 14px; background-color: #fff; }
-        tr:hover td { background-color: #f8fafc; }
-        input { width: 100%; min-width: 60px; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 600; color: #334155; }
-        input:focus { outline: 2px solid #6366f1; background: #fff; border-radius: 6px; }
+        th { background: #1e293b; color: white; padding: 12px; text-transform: uppercase; font-size: 11px; }
+        td { border: 1px solid #e2e8f0; padding: 4px; text-align: center; background: white; }
+        input { width: 100%; text-align: center; padding: 8px; font-weight: 600; color: #334155; border: none; }
+        input:focus { outline: 2px solid #6366f1; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col">
+<body class="bg-slate-100 min-h-screen">
 
-    <div id="dashboard-section" class="p-4 w-full">
+    <div id="login-section" class="p-8 flex justify-center">
+        <div class="bg-white p-6 rounded-xl shadow border w-full max-w-sm">
+            <h2 class="text-lg font-bold mb-4">Login</h2>
+            <select id="class-select" class="w-full border p-2 mb-3 rounded" onchange="updateSections()"><option value="">-- Class --</option></select>
+            <select id="section-select" class="w-full border p-2 mb-3 rounded"><option value="">-- Section --</option></select>
+            <button onclick="enter()" class="w-full bg-indigo-600 text-white py-2 rounded font-bold">Open Workspace</button>
+        </div>
+    </div>
+
+    <div id="dashboard-section" class="hidden p-4 w-full">
         <div class="bg-slate-900 text-white p-4 rounded-xl flex justify-between">
             <h2 id="current-view-title" class="font-bold">Workspace Ready</h2>
-            <button onclick="exportProfessionalExcel()" class="bg-emerald-500 px-4 py-1 rounded">Export Excel</button>
+            <button onclick="exportProfessionalExcel()" class="bg-emerald-500 px-4 py-1 rounded text-xs font-bold">Export Excel</button>
         </div>
         <div class="table-container mt-4">
             <table id="marks-entry-table">
@@ -56,62 +55,66 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // CLASS V FIX: Yahan subjects list update kar di hai taaki data load ho sake
-        let ActiveConfigStructure = { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20 };
-        let DatabaseReferencePath = "student_records/V/MT. ALPS";
+        const academicStructure = {
+            "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
+            "V": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], sections: ["MT. ALPS", "MT. BLANC", "MT. ELBERT", "MT. EVEREST"] },
+            "X": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], sections: ["WORDSWORTH"] }
+        };
 
+        const clsSelect = document.getElementById('class-select');
+        Object.keys(academicStructure).forEach(c => clsSelect.innerHTML += `<option value="${c}">Class ${c}</option>`);
+
+        function updateSections() {
+            const secSelect = document.getElementById('section-select');
+            secSelect.innerHTML = '<option value="">-- Section --</option>';
+            academicStructure[clsSelect.value]?.sections.forEach(s => secSelect.innerHTML += `<option value="${s}">${s}</option>`);
+        }
+
+        function enter() {
+            const cls = clsSelect.value;
+            const sec = document.getElementById('section-select').value;
+            if(!cls || !sec) return alert("Select Class/Section");
+            
+            const ActiveConfig = academicStructure[cls];
+            const DatabasePath = `student_records/${cls}/${sec}`;
+            
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('current-view-title').innerText = `Workspace: ${cls} - ${sec}`;
+            
+            // Header
+            document.getElementById('table-head-row').innerHTML = `<tr><th>Roll No</th><th>Name</th>${ActiveConfig.subjects.map(s => `<th>${s}</th>`).join('')}<th>Total</th></tr>`;
+            
+            // Data
+            database.ref(DatabasePath).on('value', snap => {
+                const tbody = document.getElementById('table-body-rows');
+                tbody.innerHTML = '';
+                let data = snap.val() || {};
+                let list = Object.keys(data).map(id => ({id, ...data[id]}));
+                list.sort((a,b) => (Number(a.rollNo)||0) - (Number(b.rollNo)||0));
+                
+                list.forEach(s => {
+                    let total = ActiveConfig.subjects.reduce((a, sub) => sub !== 'Art' ? a + (Number(s[sub])||0) : a, 0);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><input type="number" value="${s.rollNo||''}" onblur="database.ref('${DatabasePath}/${s.id}/rollNo').set(this.value)"></td>
+                                    <td><input type="text" value="${s.name||''}" onblur="database.ref('${DatabasePath}/${s.id}/name').set(this.value)"></td>
+                                    ${ActiveConfig.subjects.map(sub => `<td><input type="text" value="${s[sub]||''}" onblur="database.ref('${DatabasePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`).join('')}
+                                    <td class="font-bold bg-slate-200">${total}</td>`;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+        
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') {
                 const inputs = Array.from(document.querySelectorAll('input'));
-                const index = inputs.indexOf(e.target);
-                
-                if (e.key === 'ArrowDown' || e.key === 'Enter') {
-                    e.preventDefault();
-                    if (inputs[index + 12]) inputs[index + 12].focus();
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (inputs[index - 12]) inputs[index - 12].focus();
-                } else if (e.key === 'ArrowRight') {
-                    if (inputs[index + 1]) inputs[index + 1].focus();
-                } else if (e.key === 'ArrowLeft') {
-                    if (inputs[index - 1]) inputs[index - 1].focus();
-                }
+                const i = inputs.indexOf(e.target);
+                const cols = document.querySelector('thead tr').children.length - 1; 
+                if (['ArrowDown', 'Enter'].includes(e.key)) { e.preventDefault(); if(inputs[i+cols]) inputs[i+cols].focus(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); if(inputs[i-cols]) inputs[i-cols].focus(); }
             }
         });
-
-        function RenderDataMatrix(records) {
-            const tbody = document.getElementById('table-body-rows');
-            tbody.innerHTML = '';
-            
-            let studentsList = Object.keys(records).map(id => ({ id: id, ...records[id] }));
-            
-            studentsList.forEach(s => {
-                s.total = ActiveConfigStructure.subjects.reduce((acc, sub) => sub !== 'Art' ? acc + (Number(s[sub]) || 0) : acc, 0);
-            });
-
-            let ranked = [...studentsList].sort((a,b) => b.total - a.total);
-            studentsList.sort((a,b) => (Number(a.rollNo) || 0) - (Number(b.rollNo) || 0));
-
-            studentsList.forEach(s => {
-                const tr = document.createElement('tr');
-                let rank = ranked.findIndex(r => r.id === s.id) + 1;
-                
-                let html = `<td><input type="number" value="${s.rollNo || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/rollNo').set(this.value)"></td>
-                            <td><input type="text" value="${s.name || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/name').set(this.value)"></td>`;
-                
-                ActiveConfigStructure.subjects.forEach(sub => {
-                    html += `<td><input type="text" class="${sub==='Art'?'grade-input':''}" value="${s[sub] || ''}" onblur="database.ref('${DatabaseReferencePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`;
-                });
-
-                html += `<td class="bg-slate-200 font-bold">${s.total}</td><td class="bg-slate-200">${rank}</td>`;
-                tr.innerHTML = html;
-                tbody.appendChild(tr);
-            });
-        }
-
-        database.ref(DatabaseReferencePath).on('value', (snap) => RenderDataMatrix(snap.val() || {}));
-        
-        function exportProfessionalExcel() { /* Tumhara code */ }
+        function exportProfessionalExcel() { alert("Exporting..."); }
     </script>
 </body>
 </html>
