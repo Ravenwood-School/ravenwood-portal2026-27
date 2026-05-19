@@ -3,51 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ravenwood Premium Portal</title>
+    <title>Ravenwood Results Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <style>
-        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; }
-        th { background: #1e293b; color: white; padding: 12px; text-transform: uppercase; font-size: 11px; }
-        td { border: 1px solid #e2e8f0; padding: 4px; text-align: center; background: white; }
-        input { width: 100%; text-align: center; padding: 8px; font-weight: 600; }
-        input:focus { outline: 2px solid #6366f1; }
+        .missing-mark { background-color: #fee2e2 !important; border: 2px solid #ef4444 !important; }
+        table { border-collapse: collapse; width: 100%; min-width: 1000px; }
+        th, td { border: 1px solid #d1d5db; padding: 10px; text-align: center; font-size: 14px; }
+        th { background-color: #f3f4f6; color: #1f2937; font-weight: 600; }
+        input { width: 100%; text-align: center; background: transparent; border: none; padding: 6px; font-weight: 500; }
+        input:focus { outline: 2px solid #3b82f6; background: #fff; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <div id="login-section" class="p-8 flex justify-center">
-        <div class="bg-white p-6 rounded-xl shadow border w-full max-w-sm">
-            <h2 class="text-lg font-bold mb-4">Login</h2>
-            <select id="role-select" class="w-full border p-2 mb-3 rounded" onchange="toggleLogin()">
-                <option value="teacher">Teacher</option>
-                <option value="admin">Admin</option>
+    <header class="bg-indigo-950 text-white p-4 shadow-lg flex justify-between items-center px-8">
+        <div class="flex items-center gap-4">
+            <img src="https://via.placeholder.com/60" alt="Logo" class="h-10 w-10 rounded-full bg-white p-1">
+            <h1 class="text-xl font-bold">RAVENWOOD INTERNATIONAL SCHOOL</h1>
+        </div>
+        <button id="logout-btn" class="hidden bg-rose-600 px-4 py-1.5 rounded text-sm font-bold" onclick="logout()">Logout</button>
+    </header>
+
+    <main id="login-section" class="flex-grow flex justify-center items-center p-4">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm border">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2">Portal Login</h2>
+            <select id="role-select" class="w-full border p-2 mb-3 rounded" onchange="toggleLoginFields()">
+                <option value="teacher">Teacher Entry</option>
+                <option value="admin">Administrator</option>
             </select>
             <div id="teacher-fields">
-                <select id="class-select" class="w-full border p-2 mb-3 rounded" onchange="updateSections()"><option value="">-- Class --</option></select>
-                <select id="section-select" class="w-full border p-2 mb-3 rounded"><option value="">-- Section --</option></select>
+                <select id="class-select" class="w-full border p-2 mb-3 rounded" onchange="updateSectionsDropdown()"><option value="">-- Select Class --</option></select>
+                <select id="section-select" class="w-full border p-2 mb-3 rounded"><option value="">-- Select Section --</option></select>
             </div>
-            <input type="password" id="admin-pass" placeholder="Password" class="hidden w-full border p-2 mb-3 rounded">
-            <button onclick="enterDashboard()" class="w-full bg-indigo-600 text-white py-2 rounded font-bold">Initialize</button>
+            <input type="password" id="admin-pass" placeholder="Admin Password" class="hidden w-full border p-2 mb-3 rounded">
+            <button onclick="login()" class="w-full bg-indigo-600 text-white py-2 rounded font-bold">Enter Dashboard</button>
         </div>
-    </div>
+    </main>
 
-    <div id="dashboard-section" class="hidden p-4 w-full">
-        <div class="bg-slate-900 text-white p-4 rounded-xl flex justify-between">
-            <h2 id="current-view-title" class="font-bold">Workspace Ready</h2>
-            <button onclick="exportProfessionalExcel()" class="bg-emerald-500 px-4 py-1 rounded">Export Excel</button>
+    <main id="dashboard-section" class="hidden flex-grow p-6 w-full">
+        <div class="bg-white p-4 rounded-lg shadow border flex justify-between items-center mb-4">
+            <h2 id="current-view-title" class="font-bold">Class Workspace</h2>
+            <div class="flex gap-2">
+                <button onclick="addNewStudentRow()" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">+ Add Row</button>
+                <button onclick="exportExcel()" class="bg-emerald-600 text-white px-3 py-1 rounded text-sm">Export Excel</button>
+            </div>
         </div>
-        <div class="table-container mt-4">
+        <div class="overflow-x-auto bg-white p-4 rounded shadow border">
             <table id="marks-entry-table">
                 <thead id="table-head-row"></thead>
                 <tbody id="table-body-rows"></tbody>
             </table>
         </div>
-    </div>
+    </main>
 
     <script>
         const firebaseConfig = {
@@ -61,95 +72,105 @@
         };
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        
+
         const academicStructure = {
-            "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
-            "V": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], sections: ["MT. ALPS", "MT. BLANC", "MT. ELBERT", "MT. EVEREST"] },
-            "X": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], sections: ["WORDSWORTH"] }
+            "I": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["DAFFODILS", "DAISY", "ORCHID", "TULIP"] },
+            "II": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["EARTH", "JUPITER", "MARS", "NEPTUNE", "VENUS"] },
+            "III": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["AMAZON", "BEAS", "INDUS", "NILE", "THAMES"] },
+            "IV": { subjects: ["English", "Hindi", "Punjabi", "Maths", "EVS", "ICT", "Art"], max: 20, sections: ["ARCTIC", "ATLANTIC", "PACIFIC"] },
+            "V": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["MT. ALPS", "MT. BLANC", "MT. ELBERT", "MT. EVEREST"] },
+            "VI": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["DARWIN", "EINSTEIN", "NEWTON"] },
+            "VII": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["DIAMOND", "EMERALD", "PEARL"] },
+            "VIII": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["FLAMINGO", "HORNBILL", "JAY"] },
+            "IX": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 20, sections: ["LEONARDO", "PICASSO", "SALVADOR"] },
+            "X": { subjects: ["English", "Hindi", "Punjabi", "Maths", "Science", "SST", "ICT", "Art"], max: 40, sections: ["WORDSWORTH"] }
         };
 
         let ActiveConfig = null, DatabasePath = "";
 
-        // Login Logic
-        function toggleLogin() {
+        const clsSelect = document.getElementById('class-select');
+        Object.keys(academicStructure).forEach(cls => {
+            let opt = document.createElement('option'); opt.value = cls; opt.innerText = `Class ${cls}`;
+            clsSelect.appendChild(opt);
+        });
+
+        function updateSectionsDropdown() {
+            const cls = clsSelect.value;
+            const secSelect = document.getElementById('section-select');
+            secSelect.innerHTML = '<option value="">-- Section --</option>';
+            if(cls && academicStructure[cls]) {
+                academicStructure[cls].sections.forEach(sec => {
+                    let opt = document.createElement('option'); opt.value = sec; opt.innerText = sec;
+                    secSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function toggleLoginFields() {
             const role = document.getElementById('role-select').value;
             document.getElementById('teacher-fields').classList.toggle('hidden', role === 'admin');
             document.getElementById('admin-pass').classList.toggle('hidden', role === 'teacher');
         }
 
-        const clsSelect = document.getElementById('class-select');
-        Object.keys(academicStructure).forEach(c => clsSelect.innerHTML += `<option value="${c}">Class ${c}</option>`);
-
-        function updateSections() {
-            const cls = clsSelect.value;
-            const secSelect = document.getElementById('section-select');
-            secSelect.innerHTML = '<option value="">-- Section --</option>';
-            if(cls && academicStructure[cls]) {
-                academicStructure[cls].sections.forEach(s => secSelect.innerHTML += `<option value="${s}">${s}</option>`);
+        function login() {
+            const role = document.getElementById('role-select').value;
+            if(role === 'admin') {
+                if(document.getElementById('admin-pass').value !== '1234') { alert("Wrong Password!"); return; }
+                Initialize("I", "DAFFODILS");
+            } else {
+                const cls = clsSelect.value;
+                const sec = document.getElementById('section-select').value;
+                if(!cls || !sec) { alert("Select Class & Section"); return; }
+                Initialize(cls, sec);
             }
         }
 
-        function enterDashboard() {
-            const cls = clsSelect.value;
-            const sec = document.getElementById('section-select').value;
-            if(!cls || !sec) { alert("Select Class/Section"); return; }
+        function Initialize(cls, sec) {
             ActiveConfig = academicStructure[cls];
             DatabasePath = `student_records/${cls}/${sec}`;
+            document.getElementById('current-view-title').innerText = `Workspace: ${cls} - ${sec}`;
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
-            document.getElementById('current-view-title').innerText = `Workspace: ${cls} - ${sec}`;
-            SyncData();
+            document.getElementById('logout-btn').classList.remove('hidden');
+            renderTable();
         }
 
-        // KEYBOARD NAVIGATION
-        document.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT') {
-                const inputs = Array.from(document.querySelectorAll('input'));
-                const idx = inputs.indexOf(e.target);
-                const cols = ActiveConfig.subjects.length + 2;
-                if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); if (inputs[idx + cols]) inputs[idx + cols].focus(); }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); if (inputs[idx - cols]) inputs[idx - cols].focus(); }
-                else if (e.key === 'ArrowRight') { if (inputs[idx + 1]) inputs[idx + 1].focus(); }
-                else if (e.key === 'ArrowLeft') { if (inputs[idx - 1]) inputs[idx - 1].focus(); }
-            }
-        });
-
-        // DATA RENDERING (NO JUMPING FIX)
-        function SyncData() {
+        function renderTable() {
             const thead = document.getElementById('table-head-row');
             thead.innerHTML = `<tr><th>Roll No</th><th>Name</th>${ActiveConfig.subjects.map(s => `<th>${s}</th>`).join('')}<th>Total</th><th>Rank</th></tr>`;
             
             database.ref(DatabasePath).on('value', snap => {
                 const tbody = document.getElementById('table-body-rows');
                 tbody.innerHTML = '';
-                let data = snap.val() || {};
+                const data = snap.val() || {};
                 let list = Object.keys(data).map(id => ({id, ...data[id]}));
+                list.sort((a,b) => (Number(a.rollNo)||0) - (Number(b.rollNo)||0));
                 
-                // Keep order by Roll Number
-                list.sort((a,b) => (Number(a.rollNo) || 0) - (Number(b.rollNo) || 0));
-                
-                let ranked = [...list].sort((a,b) => {
-                    let t1 = ActiveConfig.subjects.reduce((a, s) => s !== 'Art' ? a + (Number(data[a.id]?.[s])||0) : a, 0); // Need actual calculation here
-                    return 0; // Simple placeholder, logic is handled in render
-                });
-
                 list.forEach(s => {
-                    let total = ActiveConfig.subjects.reduce((a, sub) => sub !== 'Art' ? a + (Number(s[sub]) || 0) : a, 0);
+                    let total = ActiveConfig.subjects.reduce((a, sub) => sub !== 'Art' ? a + (Number(s[sub])||0) : a, 0);
                     const tr = document.createElement('tr');
-                    let html = `<td><input type="number" value="${s.rollNo || ''}" onblur="database.ref('${DatabasePath}/${s.id}/rollNo').set(this.value)"></td>
-                                <td><input type="text" value="${s.name || ''}" onblur="database.ref('${DatabasePath}/${s.id}/name').set(this.value)"></td>`;
-                    
-                    ActiveConfig.subjects.forEach(sub => {
-                        html += `<td><input type="text" value="${s[sub] || ''}" onblur="database.ref('${DatabasePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`;
-                    });
-
-                    tr.innerHTML = html + `<td class="font-bold bg-slate-200">${total}</td><td>-</td>`;
+                    tr.innerHTML = `<td><input type="number" value="${s.rollNo||''}" onblur="database.ref('${DatabasePath}/${s.id}/rollNo').set(this.value)"></td>
+                                    <td><input type="text" value="${s.name||''}" onblur="database.ref('${DatabasePath}/${s.id}/name').set(this.value)"></td>
+                                    ${ActiveConfig.subjects.map(sub => `<td><input type="text" value="${s[sub]||''}" onblur="database.ref('${DatabasePath}/${s.id}/${sub}').set(this.value.toUpperCase())"></td>`).join('')}
+                                    <td class="font-bold bg-slate-100">${total}</td><td>-</td>`;
                     tbody.appendChild(tr);
                 });
             });
         }
-        
-        function exportProfessionalExcel() { /* Same export logic */ }
+
+        function addNewStudentRow() { database.ref(DatabasePath).push().set({rollNo:"", name:""}); }
+        function logout() { location.reload(); }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if(e.target.tagName === 'INPUT') {
+                const inputs = Array.from(document.querySelectorAll('input'));
+                const i = inputs.indexOf(e.target);
+                const cols = ActiveConfig.subjects.length + 2;
+                if(e.key === 'ArrowDown') { e.preventDefault(); if(inputs[i+cols]) inputs[i+cols].focus(); }
+                else if(e.key === 'ArrowUp') { e.preventDefault(); if(inputs[i-cols]) inputs[i-cols].focus(); }
+            }
+        });
     </script>
 </body>
 </html>
