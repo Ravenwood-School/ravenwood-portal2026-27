@@ -456,8 +456,16 @@
 
             let rankedList = [...studentsList].sort((a, b) => b.calculatedTotal - a.calculatedTotal);
             let rankMap = {};
+            let currentRank = 1;
             rankedList.forEach((student, i) => {
-                rankMap[student.id] = student.calculatedTotal > 0 ? i + 1 : '-';
+                if (student.calculatedTotal <= 0) {
+                    rankMap[student.id] = '-';
+                } else {
+                    if (i > 0 && student.calculatedTotal < rankedList[i - 1].calculatedTotal) {
+                        currentRank++;
+                    }
+                    rankMap[student.id] = currentRank <= 4 ? currentRank : '-';
+                }
             });
 
             studentsList.sort((a, b) => {
